@@ -4,7 +4,7 @@
   <title>Anàlisi JSON</title>
 </head>
 <body>
-  <h1>Resultats de l'anàlisi</h1>
+  <h1>Diferència del % GC entre "Dades registrals" i "Partícips d'una entitat"</h1>
   <pre id="resultats"></pre>
 
   <script>
@@ -34,7 +34,7 @@
         });
 
         // Construïm el text de resultats
-        let resultatsText = 'Entitats amb valors diferents iguals o superiors a 0.02:\n\n';
+        let resultatsText = '';
         entitatsDiferents.forEach(entitat => {
           resultatsText += `${entitat.denominacio}\nNúmero de Registre: ${entitat.numeroRegistre}\n`;
           resultatsText += `Total Participació Generalitat 1: ${entitat.totalParticipacio1}\nTotal Participació Generalitat 2: ${entitat.totalParticipacio2}\n\n`;
