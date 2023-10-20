@@ -14,7 +14,7 @@
         const response = await fetch('https://analisi.transparenciacatalunya.cat/resource/gr39-ik6u.json');
         const data = await response.json();
 
-        // Creem un array per emmagatzemar les entitats amb valors diferents
+        // Creem un array per emmagatzemar les entitats amb diferències iguals o superiors a 0.02
         const entitatsDiferents = [];
 
         // Recorrem les dades i comparem els camps "total_participaci_generalitat" i "total_participaci_generalitat_2"
@@ -22,8 +22,8 @@
           const totalParticipacio1 = entitat.total_participaci_generalitat;
           const totalParticipacio2 = entitat.total_participaci_generalitat_2;
 
-          if (totalParticipacio1 !== totalParticipacio2) {
-            // Emmagatzemem l'entitat amb valors diferents, incloent "denominació", "número de registre", "total_participaci_generalitat" i "total_participaci_generalitat_2"
+          if (Math.abs(totalParticipacio1 - totalParticipacio2) >= 0.02) {
+            // Emmagatzemem l'entitat amb diferència igual o superior a 0.02, incloent "denominació", "número de registre", "total_participaci_generalitat" i "total_participaci_generalitat_2"
             entitatsDiferents.push({
               denominacio: entitat.denominaci,
               numeroRegistre: entitat.n_mero_de_registre,
@@ -34,7 +34,7 @@
         });
 
         // Construïm el text de resultats
-        let resultatsText = 'Entitats amb valors diferents:\n\n';
+        let resultatsText = 'Entitats amb valors diferents iguals o superiors a 0.02:\n\n';
         entitatsDiferents.forEach(entitat => {
           resultatsText += `${entitat.denominacio}\nNúmero de Registre: ${entitat.numeroRegistre}\n`;
           resultatsText += `Total Participació Generalitat 1: ${entitat.totalParticipacio1}\nTotal Participació Generalitat 2: ${entitat.totalParticipacio2}\n\n`;
