@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Processar PDF del BORME</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <h1>Extreure inscripcions del BORME</h1>
+
+  <input type="file" id="pdfFile" accept=".pdf">
+  <button onclick="processarPDF()">Processar PDF</button>
+
+  <div id="result">
+    <h2>Inscripcions extretes:</h2>
+    <ul id="paragrafList"></ul>
+  </div>
+
+  <script>
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    async function processarPDF() {
+      const pdfFileInput = document.getElementById('pdfFile');
+      const paragrafList = document.getElementById('paragrafList');
+
+      if (!pdfFileInput.files || pdfFileInput.files.length === 0) {
+        alert('Si us plau, carregueu un fitxer PDF.');
+        return;
+      }
+
+      const pdfFile = pdfFileInput.files[0];
+
+      try {
+        const pdfData = new Uint8Array(await pdfFile.arrayBuffer());
+        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+        let allText = '';
+        let currentParagraph = ''; 
+        let lastY = null;
+        const MIN_Y_DIFFERENCE = 10; 
+
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+          const page = await pdf.getPage(pageNumber);
+          const textContent = await page.getTextContent();
+
+          let fullText = ''; 
+
+          textContent.items.forEach(item => {
+            if (lastY === null || Math.abs(item.transform[5] - lastY) <= MIN_Y_DIFFERENCE) {
+              currentParagraph += item.str + ' ';
+            } else {
+              const trimmedParagraph = currentParagraph.trim();
+              if (trimmedParagraph !== '') {
+                fullText += trimmedParagraph + '\n';
+              }
+              currentParagraph = item.str + ' ';
+            }
+            lastY = item.transform[5];
+          });
+
+          const trimmedParagraph = currentParagraph.trim();
+          if (trimmedParagraph !== '') {
+            fullText += trimmedParagraph + '\n';
+          }
+
+          allText += fullText;
+          //allText = allText.replace(/\n\n/g, ' '); 
+
+          currentParagraph = '';
+          lastY = null;
+        }
+	
+	const regex = /^(.*?) +(BORME-.*?) +\((\d+)\)\n/gm;
+        // const regex = /(^\d+) - (.*)+\n((.*)+)\n/gm;
+        const paragrafList = document.getElementById('paragrafList');
+
+        let regexMatches;
+        let jsonArray = []; 
+
+        while ((regexMatches = regex.exec(allText)) !== null) {
+          const codi = regexMatches[1];
+          const societat = regexMatches[2];
+          const inscripcio = regexMatches[3];
+
+          const jsonObject = {
+            Codi: codi,
+            Societat: societat,
+            Inscripcio: inscripcio,
+          };
+
+          jsonArray.push(jsonObject);
+        }
+
+        const jsonString = JSON.stringify(jsonArray, null, 2);
+        paragrafList.innerHTML = `<pre>${jsonString}</pre>`;
+
+      } catch (error) {
+        console.error('Hi ha hagut un error en processar el PDF:', error);
+        alert('Hi ha hagut un error en processar el PDF.');
+      }
+    }
+  </script>
+</body>
+</html>
