@@ -23,7 +23,7 @@ const dia = ara.getDate().toString().padStart(2, '0');
 // Crear la cadena AAAA/MM/DD
 // const dataEnFormatAAAAMMDD = `${any}/${mes}/${dia}`;
 
-const dataEnFormatAAAAMMDD = "2023/11/06";
+const dataEnFormatAAAAMMDD = "2023/10/31";
 
 // console.log(dataEnFormatAAAAMMDD);
 
@@ -217,8 +217,6 @@ return jsonArray;
 
 
 
-
-
 // BUSCAR SOCIETATS DEL RSP A L'ÍNDEX DEL BORME
 
 // RETORNA LES COINCIDÈNCIES ENTRE LLISTA SOCIETATS RSP I L'ÍNDEX DEL BORME
@@ -288,28 +286,127 @@ return extreure;
 async function matriuConsulta() {
   try {
     const dadesAmbURLs = await extraccio();
+    const resultatsGlobals = []; // Variable per emmagatzemar tots els resultats
 
-    const nomsUnicsMap = new Map(); // Mapa per emmagatzemar URLs úniques i les seves inscripcions
-
-    dadesAmbURLs.forEach((registre) => {
-      if (!nomsUnicsMap.has(registre.URL)) {
-        nomsUnicsMap.set(registre.URL, [registre.Codi]); // Inicialitza un array amb el primer id
+    for (const registre of dadesAmbURLs) {
+      const codiUnicMap = new Map(); // Mapa per emmagatzemar codis únics
+      if (!codiUnicMap.has(registre.URL)) {
+        codiUnicMap.set(registre.URL, [registre.Codi]);
       } else {
-        nomsUnicsMap.get(registre.URL).push(registre.Codi); // Afegeix l'id a l'array existent
+        codiUnicMap.get(registre.URL).push(registre.Codi);
       }
-    });
 
-    console.log("nomsUnicsMap:");
-    console.log(nomsUnicsMap);
+      const url = registre.URL;
+      const codis = codiUnicMap.get(url);
+
+      try {
+        const resultats = await extreureTextBorme(url, codis);
+        if (resultats.length > 0) {
+          // Imprimeix els resultats de cada PDF
+          console.log('Resultats per a URL:', url);
+          console.log(resultats);
+          resultatsGlobals.push(...resultats); // Afegir els resultats a la variable global
+        }
+      } catch (pdfError) {
+        console.error(`Hi ha hagut un error en processar el PDF de la URL ${url}: ${pdfError}`);
+      }
+    }
+    
+    // Crear un full de càlcul amb tots els resultats
+    const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dades");
+    
+    // Descarregar l'arxiu XLSX
+    XLSX.writeFile(wb, 'dades.xlsx');
 
   } catch (error) {
     console.error('Hi ha hagut un error:', error);
   }
 }
 
-// Crida la funció per extreure la primera paraula de cada PDF
+
+// Crida la funció per extreure la matriu de consulta
 matriuConsulta();
 
+async function extreureTextBorme(url, codis) {
+  const pdfUrl = 'https://cors-anywhere.herokuapp.com/' + url;
+  console.log(pdfUrl);
+  
+  const pdfjsLib = window['pdfjs-dist/build/pdf'];
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  const response = await fetch(pdfUrl);
+  const arrayBuffer = await response.arrayBuffer();
+  const pdfData = new Uint8Array(arrayBuffer);
+
+  try {
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+    let allText = '';
+    let currentParagraph = ''; 
+    let lastY = null;
+    const MIN_Y_DIFFERENCE = 10; 
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+      const page = await pdf.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+
+      let fullText = ''; 
+
+      textContent.items.forEach(item => {
+        if (lastY === null || Math.abs(item.transform[5] - lastY) <= MIN_Y_DIFFERENCE) {
+          currentParagraph += item.str + ' ';
+        } else {
+          const trimmedParagraph = currentParagraph.trim();
+          if (trimmedParagraph !== '') {
+            fullText += trimmedParagraph + '\n';
+          }
+          currentParagraph = item.str + ' ';
+        }
+        lastY = item.transform[5];
+      });
+
+      const trimmedParagraph = currentParagraph.trim();
+      if (trimmedParagraph !== '') {
+        fullText += trimmedParagraph + '\n';
+      }
+
+      allText += fullText;
+      allText = allText.replace(/\n\n/g, ' '); 
+
+      currentParagraph = '';
+      lastY = null;
+    }
+
+    const regex = /(^\d+) - (.*)+\n((.*)+)\n/gm;
+    const paragrafList = document.getElementById('paragrafList');
+
+    let regexMatches;
+    let jsonArray = []; 
+
+    while ((regexMatches = regex.exec(allText)) !== null) {
+      const codi = regexMatches[1];
+      const societat = regexMatches[2];
+      const inscripcio = regexMatches[3];
+
+      if (codis.includes(codi)) {
+        const jsonObject = {
+          Codi: codi,
+          Societat: societat,
+          Inscripcio: inscripcio,
+        };
+        jsonArray.push(jsonObject);
+      }
+    }
+
+    return jsonArray;
+
+  } catch (error) {
+    console.error('Hi ha hagut un error en processar el PDF:', error);
+    alert('Hi ha hagut un error en processar el PDF.');
+  }
+}
 
 
 </script>
