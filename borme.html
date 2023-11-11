@@ -8,24 +8,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 
 <script>
+  let dataEnFormatAAAAMMDD; // Declarar la variable de data fora de la funció
 
-  // URL del PDF. EL EL FUTUR S'HA DE CALCULAR LA URL DEL DIA AUTOMÀTICAMENT O INTRODUIR DATA ALTERNATIVA
+  // Demana la data d'entrada a l'usuari mitjançant una caixa de dialeg prompt
+  const dataUsuari = prompt("Introdueix la data en format AAAA/MM/DD (per exemple, 2023/11/15):");
 
-// Data d'avui
+  if (dataUsuari) {
+    // Utilitza la data proporcionada per l'usuari
+    dataEnFormatAAAAMMDD = dataUsuari;
+  } else {
+    // Utilitza la data d'avui si l'usuari no introdueix cap data
+    const ara = new Date();
+    const any = ara.getFullYear();
+    const mes = (ara.getMonth() + 1).toString().padStart(2, '0');
+    const dia = ara.getDate().toString().padStart(2, '0');
+    dataEnFormatAAAAMMDD = `${any}/${mes}/${dia}`;
+  }
 
-const ara = new Date();
-
-// Obtenir any, mes i dia
-const any = ara.getFullYear();
-const mes = (ara.getMonth() + 1).toString().padStart(2, '0');  // S'afegeix 1 perquè els mesos comencen des de 0
-const dia = ara.getDate().toString().padStart(2, '0');
-
-// Crear la cadena AAAA/MM/DD
-// const dataEnFormatAAAAMMDD = `${any}/${mes}/${dia}`;
-
-const dataEnFormatAAAAMMDD = "2023/10/31";
-
-// console.log(dataEnFormatAAAAMMDD);
+console.log(dataEnFormatAAAAMMDD);
 
 async function webScraping() {
 
