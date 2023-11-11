@@ -79,14 +79,14 @@
         let jsonArray = []; 
 
         while ((regexMatches = regex.exec(allText)) !== null) {
-          const codi = regexMatches[1];
-          const societat = regexMatches[2];
-          const inscripcio = regexMatches[3];
+          const societat = regexMatches[1];
+          const borme = regexMatches[2];
+          const codi = regexMatches[3];
 
           const jsonObject = {
-            Codi: codi,
             Societat: societat,
-            Inscripcio: inscripcio,
+            Borme: borme,
+            Codi: codi,
           };
 
           jsonArray.push(jsonObject);
