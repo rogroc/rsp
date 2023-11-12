@@ -573,19 +573,21 @@ async function matriuConsulta() {
       // Crear un full de càlcul amb tots els resultats
       const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Dades");
+      XLSX.utils.book_append_sheet(wb, ws, dataActual.replaceAll("/", "") + "_extracció_BORME");
 
       // Descarregar l'arxiu XLSX
       XLSX.writeFile(wb, 'dades.xlsx');
 
-      // Amagar la imatge d'animació de càrrega
-      document.getElementById('loadingImage').style.display = 'none';
-
       alert("XLSX DESCARREGAT");
     } else {
-      alert("No s'ha trobat cap entitat del RSP al BORME d'aquesta data");
+
+      document.getElementById('loadingImage').style.display = 'none';
+setTimeout(function() {
+  alert("No s'ha trobat cap entitat del RSP al BORME d'aquesta data");
+}, 100); 
     }
   } catch (error) {
+    document.getElementById('loadingImage').style.display = 'none';
     console.error('Hi ha hagut un error:', error);
     // Amagar la imatge d'animació de càrrega
     document.getElementById('loadingImage').style.display = 'none';
