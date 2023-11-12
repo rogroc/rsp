@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Processament de Text amb Expressions Regulars</title>
+  <title>Cercador d'entitats del RSP al BORME</title>
 </head>
 <body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha512-q+4liFwdPC/bNdhUpZx6aXDx/h77yEQtn4I1slHydcbZK34nLaR3cAeYSJshoxIOq3mjEf7xJE8YWIUHMn+oCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -10,15 +10,23 @@
 <style>
 /* Ajusta la grandària de tots els elements de la pàgina al doble */
 * {
-  transform: scale(1.1); /* Escala tots els elements al doble de mida */
+  transform: scale(1.05); /* Escala tots els elements al doble de mida */
   transform-origin: 0 0; /* Estableix l'origen de l'escala a la part superior esquerra (punta superior esquerra) */
 }
+body {
+  display: flex;
+  justify-content: center; /* Centrat horitzontal */
+  height: 100vh; /* Garanteix que l'element ocupi l'altura completa de la pantalla */
+  margin: 0; /* Elimina els marges per defecte del cos */
+}
+
 </style>
 
-<h3>Cercador d'entitats del RSP al BORME</h3>
+<div class="contenidor">
 
-<div>
-  <label for="dataInput">Introdueix la data o prem intro per la data d'avui:<br></label>
+  <h3>Cercador d'entitats del RSP al BORME</h3><br>
+
+  <p>Introdueix la data o prem intro per la data d'avui:<br></p>
   <input type="text" id="dataInput" placeholder="" onkeydown="if (event.key === 'Enter') obtenirData()">
 
   <button onclick="obtenirData()">Cerca al BORME</button><br><br>
@@ -479,13 +487,11 @@ async function obtenirData() {
             // console.log(entitats);
             // console.log(indexBORME);
 
-            // FER EL PROGRAMA AQUÍ!!!
-
             function mostrarRegistresCoincidents(entitats, indexBORME) {
                 // Filtra els registres de "indexBORME" que coincideixen amb les entitats
                 const registresCoincidents = indexBORME.filter(registre => {
-                    const nomSocietat = registre.Societat.toLowerCase().replace(/\s/g, '');
-                    return entitats.some(entitat => nomSocietat.includes(entitat.toLowerCase().replace(/\s/g, '')));
+                    const nomSocietat = registre.Societat.replace(/\([^)]*\)|\bSA?\b|\bSL?\b|\bAIE?\b|\bSAU?\b|\bSAL?\b/g, '').trim().toLowerCase().replace(/\s|\./g, '');
+                    return entitats.some(entitat => nomSocietat.startsWith(entitat.toLowerCase().replace(/\s/g, '')));
                 });
 
                 return registresCoincidents;
