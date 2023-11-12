@@ -7,25 +7,40 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha512-q+4liFwdPC/bNdhUpZx6aXDx/h77yEQtn4I1slHydcbZK34nLaR3cAeYSJshoxIOq3mjEf7xJE8YWIUHMn+oCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 
+<h3>Cercador d'entitats del RSP al BORME</h3>
+
+<div>
+  <label for="dataInput">Introdueix la data o prem intro per la data d'avui: </label>
+  <input type="text" id="dataInput" placeholder="" onkeydown="if (event.key === 'Enter') obtenirData()">
+
+  <button onclick="obtenirData()">Cerca al BORME</button>
+</div>
+
 <script>
+  // Obtenir la data actual
+  const ara = new Date();
+  const any = ara.getFullYear();
+  const mes = (ara.getMonth() + 1).toString().padStart(2, '0');
+  const dia = ara.getDate().toString().padStart(2, '0');
+  const dataActual = `${any}/${mes}/${dia}`;
+
+  // Establir la data actual com a valor del placeholder
+  document.getElementById('dataInput').placeholder = dataActual;
+
+async function obtenirData() {
   let dataEnFormatAAAAMMDD; // Declarar la variable de data fora de la funció
 
-  // Demana la data d'entrada a l'usuari mitjançant una caixa de dialeg prompt
-  const dataUsuari = prompt("Introdueix la data en format AAAA/MM/DD (per exemple, 2023/11/15):");
+  const dataInput = document.getElementById("dataInput").value;
 
-  if (dataUsuari) {
-    // Utilitza la data proporcionada per l'usuari
-    dataEnFormatAAAAMMDD = dataUsuari;
+  if (dataInput) {
+    // Utilitzar la data proporcionada per l'usuari
+    dataEnFormatAAAAMMDD = dataInput;
   } else {
-    // Utilitza la data d'avui si l'usuari no introdueix cap data
-    const ara = new Date();
-    const any = ara.getFullYear();
-    const mes = (ara.getMonth() + 1).toString().padStart(2, '0');
-    const dia = ara.getDate().toString().padStart(2, '0');
-    dataEnFormatAAAAMMDD = `${any}/${mes}/${dia}`;
+    // Utilitzar la data d'avui si l'usuari no introdueix cap data
+    dataEnFormatAAAAMMDD = dataActual;
   }
 
-console.log(dataEnFormatAAAAMMDD);
+  console.log(dataEnFormatAAAAMMDD);
 
 async function webScraping() {
 
@@ -159,8 +174,8 @@ async function getTextFromPDF() {
 return jsonArray;
 
       } catch (error) {
-        console.error('Hi ha hagut un error en processar el PDF:', error);
-        alert('Hi ha hagut un error en processar el PDF.');
+        console.error("No s'ha trobat cap BORME d'aquesta data.", error);
+        alert("No s'ha trobat cap BORME d'aquesta data.");
       }
     }
 
@@ -311,14 +326,21 @@ async function matriuConsulta() {
         console.error(`Hi ha hagut un error en processar el PDF de la URL ${url}: ${pdfError}`);
       }
     }
-    
-    // Crear un full de càlcul amb tots els resultats
-    const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Dades");
-    
-    // Descarregar l'arxiu XLSX
-    XLSX.writeFile(wb, 'dades.xlsx');
+
+if (resultatsGlobals && resultatsGlobals.length > 0) {
+  // Crear un full de càlcul amb tots els resultats
+  const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Dades");
+
+  // Descarregar l'arxiu XLSX
+  XLSX.writeFile(wb, 'dades.xlsx');
+
+  alert("XLSX DESCARREGAT"); 
+
+} else {
+  alert("No s'ha trobat cap entitat del RSP al BORME analitzat");
+}
 
   } catch (error) {
     console.error('Hi ha hagut un error:', error);
@@ -393,6 +415,7 @@ async function extreureTextBorme(url, codis) {
       if (codis.includes(codi)) {
         const jsonObject = {
           Codi: codi,
+	  URL: url,
           Societat: societat,
           Inscripcio: inscripcio,
         };
@@ -408,6 +431,7 @@ async function extreureTextBorme(url, codis) {
   }
 }
 
+}
 
 </script>
 </body>
