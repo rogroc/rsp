@@ -7,13 +7,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha512-q+4liFwdPC/bNdhUpZx6aXDx/h77yEQtn4I1slHydcbZK34nLaR3cAeYSJshoxIOq3mjEf7xJE8YWIUHMn+oCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 
+<style>
+/* Ajusta la grandària de tots els elements de la pàgina al doble */
+* {
+  transform: scale(1.1); /* Escala tots els elements al doble de mida */
+  transform-origin: 0 0; /* Estableix l'origen de l'escala a la part superior esquerra (punta superior esquerra) */
+}
+</style>
+
 <h3>Cercador d'entitats del RSP al BORME</h3>
 
 <div>
   <label for="dataInput">Introdueix la data o prem intro per la data d'avui:<br></label>
   <input type="text" id="dataInput" placeholder="" onkeydown="if (event.key === 'Enter') obtenirData()">
 
-  <button onclick="obtenirData()">Cerca al BORME</button>
+  <button onclick="obtenirData()">Cerca al BORME</button><br><br>
 
   <img id="loadingImage" src="processant.gif" alt="Càrrega en curs" style="display: none;">
   <p id="loadingText" style="display: none;">Processant...</p>
@@ -456,7 +464,6 @@ async function obtenirData() {
     }
 
 
-
     // BUSCAR SOCIETATS DEL RSP A L'ÍNDEX DEL BORME
 
     // RETORNA LES COINCIDÈNCIES ENTRE LLISTA SOCIETATS RSP I L'ÍNDEX DEL BORME
@@ -523,66 +530,60 @@ async function obtenirData() {
     }
 
 async function matriuConsulta() {
-    try {
-        // Mostrar la imatge d'animació de càrrega
-        document.getElementById('loadingImage').style.display = 'block';
+  try {
+    // Mostrar la imatge d'animació de càrrega
+    document.getElementById('loadingImage').style.display = 'block';
 
-        const dadesAmbURLs = await extraccio();
-        const resultatsGlobals = []; // Variable per emmagatzemar tots els resultats
+    const dadesAmbURLs = await extraccio();
+    const resultatsGlobals = []; // Variable per emmagatzemar tots els resultats
 
-        for (const registre of dadesAmbURLs) {
-            const codiUnicMap = new Map(); // Mapa per emmagatzemar codis únics
-            if (!codiUnicMap.has(registre.URL)) {
-                codiUnicMap.set(registre.URL, [registre.Codi]);
-            } else {
-                codiUnicMap.get(registre.URL).push(registre.Codi);
-            }
+    for (const registre of dadesAmbURLs) {
+      const codiUnicMap = new Map(); // Mapa per emmagatzemar codis únics
+      if (!codiUnicMap.has(registre.URL)) {
+        codiUnicMap.set(registre.URL, [registre.Codi]);
+      } else {
+        codiUnicMap.get(registre.URL).push(registre.Codi);
+      }
 
-            const url = registre.URL;
-            const codis = codiUnicMap.get(url);
+      const url = registre.URL;
+      const codis = codiUnicMap.get(url);
 
-            try {
-                const resultats = await extreureTextBorme(url, codis);
-                if (resultats.length > 0) {
-                    // Imprimeix els resultats de cada PDF
-                    console.log('Resultats per a URL:', url);
-                    console.log(resultats);
-                    resultatsGlobals.push(...resultats); // Afegir els resultats a la variable global
-                }
-            } catch (pdfError) {
-                console.error(`Hi ha hagut un error en processar el PDF de la URL ${url}: ${pdfError}`);
-            }
-        // Amagar la imatge d'animació de càrrega
-        document.getElementById('loadingImage').style.display = 'none';
+      try {
+        const resultats = await extreureTextBorme(url, codis);
+        if (resultats.length > 0) {
+          // Imprimeix els resultats de cada PDF
+          console.log('Resultats per a URL:', url);
+          console.log(resultats);
+          resultatsGlobals.push(...resultats); // Afegir els resultats a la variable global
         }
-
-        if (resultatsGlobals && resultatsGlobals.length > 0) {
-
-            // Crear un full de càlcul amb tots els resultats
-            const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Dades");
-
-            // Descarregar l'arxiu XLSX
-            XLSX.writeFile(wb, 'dades.xlsx');
-
-        // Amagar la imatge d'animació de càrrega
-        document.getElementById('loadingImage').style.display = 'none';
-
-            alert("XLSX DESCARREGAT");
-
-        } else {
-
-            alert("No s'ha trobat cap entitat del RSP al BORME analitzat");
-        }
-
-    } catch (error) {
-
-        console.error('Hi ha hagut un error:', error);
-
+      } catch (pdfError) {
+        console.error(`Hi ha hagut un error en processar el PDF de la URL ${url}: ${pdfError}`);
+      }
+      // Amagar la imatge d'animació de càrrega
+      document.getElementById('loadingImage').style.display = 'none';
     }
-        // Amagar la imatge d'animació de càrrega
-        document.getElementById('loadingImage').style.display = 'none';
+
+    if (resultatsGlobals && resultatsGlobals.length > 0) {
+      // Crear un full de càlcul amb tots els resultats
+      const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Dades");
+
+      // Descarregar l'arxiu XLSX
+      XLSX.writeFile(wb, 'dades.xlsx');
+
+      // Amagar la imatge d'animació de càrrega
+      document.getElementById('loadingImage').style.display = 'none';
+
+      alert("XLSX DESCARREGAT");
+    } else {
+      alert("No s'ha trobat cap entitat del RSP al BORME d'aquesta data");
+    }
+  } catch (error) {
+    console.error('Hi ha hagut un error:', error);
+    // Amagar la imatge d'animació de càrrega
+    document.getElementById('loadingImage').style.display = 'none';
+  }
 }
 
 
