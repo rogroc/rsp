@@ -17,419 +17,638 @@
 </div>
 
 <script>
-  // Obtenir la data actual
-  const ara = new Date();
-  const any = ara.getFullYear();
-  const mes = (ara.getMonth() + 1).toString().padStart(2, '0');
-  const dia = ara.getDate().toString().padStart(2, '0');
-  const dataActual = `${any}/${mes}/${dia}`;
 
-  // Establir la data actual com a valor del placeholder
-  document.getElementById('dataInput').placeholder = dataActual;
+// Obtenir la data actual
+const ara = new Date();
+const any = ara.getFullYear();
+const mes = (ara.getMonth() + 1).toString().padStart(2, '0');
+const dia = ara.getDate().toString().padStart(2, '0');
+const dataActual = `${any}/${mes}/${dia}`;
+
+// Establir la data actual com a valor del placeholder
+document.getElementById('dataInput').placeholder = dataActual;
 
 async function obtenirData() {
-  let dataEnFormatAAAAMMDD; // Declarar la variable de data fora de la funció
+    let dataEnFormatAAAAMMDD; // Declarar la variable de data fora de la funció
 
-  const dataInput = document.getElementById("dataInput").value;
+    const dataInput = document.getElementById("dataInput").value;
 
-  if (dataInput) {
-    // Utilitzar la data proporcionada per l'usuari
-    dataEnFormatAAAAMMDD = dataInput;
-  } else {
-    // Utilitzar la data d'avui si l'usuari no introdueix cap data
-    dataEnFormatAAAAMMDD = dataActual;
-  }
-
-  console.log(dataEnFormatAAAAMMDD);
-
-async function webScraping() {
-
-      const url = "https://cors-anywhere.herokuapp.com/https://www.boe.es/borme/dias/" + dataEnFormatAAAAMMDD + "/";
-
-      const response = await fetch(url); // Obteniu el contingut de la pàgina web
-      const html = await response.text(); // Converteix la resposta a text
-
-      // Parseu el contingut HTML amb DOMParser
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-
-      // Cerqueu el text "ÍNDICE ALFABÉTICO DE SOCIEDADES" dins dels elements p
-      const p_elements = doc.querySelectorAll('p');
-      let pdf_href = '';
-
-      for (const p of p_elements) {
-        if (p.textContent === "ÍNDICE ALFABÉTICO DE SOCIEDADES") {
-          // Obteniu l'element "a" dins del "li" pare del "p"
-          const li_element = p.closest('li');
-          const a_element = li_element.querySelector('a');
-          // Obteniu el valor de l'atribut "href"
-          pdf_href = "https://boe.es" + a_element.getAttribute('href');
-          //console.log(pdf_href);
-        }
-      }
-
-      if (pdf_href) {
-return pdf_href;
-
-      } else {
-        console.log("No s'ha trobat BORME de la data indicada");
-      }
+    if (dataInput) {
+        // Utilitzar la data proporcionada per l'usuari
+        dataEnFormatAAAAMMDD = dataInput;
+    } else {
+        // Utilitzar la data d'avui si l'usuari no introdueix cap data
+        dataEnFormatAAAAMMDD = dataActual;
     }
 
-async function obtenirIndexBORME() {
-  try {
-    // Espera que l'objecte JSON sigui creat
-    const index = await webScraping();
-    
-    // Ara pots utilitzar jsonObject amb seguretat
-    
-    return index;
+    console.log(dataEnFormatAAAAMMDD);
 
-    // FER EL PROGRAMA AQUÍ!!!
+    async function webScraping() {
 
+        const url = "https://cors-anywhere.herokuapp.com/https://www.boe.es/borme/dias/" + dataEnFormatAAAAMMDD + "/";
 
+        const response = await fetch(url); // Obteniu el contingut de la pàgina web
+        const html = await response.text(); // Converteix la resposta a text
 
+        // Parseu el contingut HTML amb DOMParser
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
 
-  } catch (error) {
-    console.error('Hi ha hagut un error:', error);
-  }
-}
+        // Cerqueu el text "ÍNDICE ALFABÉTICO DE SOCIEDADES" dins dels elements p
+        const p_elements = doc.querySelectorAll('p');
+        let pdf_href = '';
 
-
-  // CREAR JSON AMB LES DADES DEL BORME D'ÍNDEX ALFABÈTIC DE SOCIETATS
-
-async function getTextFromPDF() {
-  const index2 = await obtenirIndexBORME();
-  const pdfUrl = 'https://cors-anywhere.herokuapp.com/' + index2;
-  console.log(pdfUrl);
-  
-  const pdfjsLib = window['pdfjs-dist/build/pdf'];
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-  const response = await fetch(pdfUrl);
-  const arrayBuffer = await response.arrayBuffer();
-  const pdfData = new Uint8Array(arrayBuffer);
-
-  try {
-        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-
-        let allText = '';
-        let currentParagraph = ''; 
-        let lastY = null;
-        const MIN_Y_DIFFERENCE = 10; 
-
-        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-          const page = await pdf.getPage(pageNumber);
-          const textContent = await page.getTextContent();
-
-          let fullText = ''; 
-
-          textContent.items.forEach(item => {
-            if (lastY === null || Math.abs(item.transform[5] - lastY) <= MIN_Y_DIFFERENCE) {
-              currentParagraph += item.str + ' ';
-            } else {
-              const trimmedParagraph = currentParagraph.trim();
-              if (trimmedParagraph !== '') {
-                fullText += trimmedParagraph + '\n';
-              }
-              currentParagraph = item.str + ' ';
+        for (const p of p_elements) {
+            if (p.textContent === "ÍNDICE ALFABÉTICO DE SOCIEDADES") {
+                // Obteniu l'element "a" dins del "li" pare del "p"
+                const li_element = p.closest('li');
+                const a_element = li_element.querySelector('a');
+                // Obteniu el valor de l'atribut "href"
+                pdf_href = "https://boe.es" + a_element.getAttribute('href');
+                //console.log(pdf_href);
             }
-            lastY = item.transform[5];
-          });
-
-          const trimmedParagraph = currentParagraph.trim();
-          if (trimmedParagraph !== '') {
-            fullText += trimmedParagraph + '\n';
-          }
-
-          allText += fullText;
-          //allText = allText.replace(/\n\n/g, ' '); 
-
-          currentParagraph = '';
-          lastY = null;
-        }
-	
-	const regex = /^(.*?) +(BORME-.*?) +\((\d+)\)\n/gm;
-        // const regex = /(^\d+) - (.*)+\n((.*)+)\n/gm;
-        const paragrafList = document.getElementById('paragrafList');
-
-        let regexMatches;
-        let jsonArray = []; 
-
-        while ((regexMatches = regex.exec(allText)) !== null) {
-          const societat = regexMatches[1];
-          const borme = regexMatches[2];
-          const codi = regexMatches[3];
-
-          const jsonObject = {
-            Societat: societat,
-            Borme: borme,
-            Codi: codi,
-          };
-
-          jsonArray.push(jsonObject);
         }
 
-        const jsonString = JSON.stringify(jsonArray, null, 2);
-return jsonArray;
+        if (pdf_href) {
+            return pdf_href;
 
-      } catch (error) {
-        console.error("No s'ha trobat cap BORME d'aquesta data.", error);
-        alert("No s'ha trobat cap BORME d'aquesta data.");
-      }
+        } else {
+            console.log("No s'ha trobat BORME de la data indicada");
+        }
+    }
+
+    async function obtenirIndexBORME() {
+        try {
+            // Espera que l'objecte JSON sigui creat
+            const index = await webScraping();
+
+            // Ara pots utilitzar jsonObject amb seguretat
+
+            return index;
+
+        } catch (error) {
+            console.error('Hi ha hagut un error:', error);
+        }
     }
 
 
-// FUNCIÓ PER EXTREURE EL LLISTAT D'ENTITATS DEL RSP DE DADES OBERTES
+    // CREAR JSON AMB LES DADES DEL BORME D'ÍNDEX ALFABÈTIC DE SOCIETATS
+
+    async function getTextFromPDF() {
+        const index2 = await obtenirIndexBORME();
+        const pdfUrl = 'https://cors-anywhere.herokuapp.com/' + index2;
+        console.log(pdfUrl);
+
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const response = await fetch(pdfUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const pdfData = new Uint8Array(arrayBuffer);
+
+        try {
+            const pdf = await pdfjsLib.getDocument({
+                data: pdfData
+            }).promise;
+
+            let allText = '';
+            let currentParagraph = '';
+            let lastY = null;
+            const MIN_Y_DIFFERENCE = 10;
+
+            for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                const page = await pdf.getPage(pageNumber);
+                const textContent = await page.getTextContent();
+
+                let fullText = '';
+
+                textContent.items.forEach(item => {
+                    if (lastY === null || Math.abs(item.transform[5] - lastY) <= MIN_Y_DIFFERENCE) {
+                        currentParagraph += item.str + ' ';
+                    } else {
+                        const trimmedParagraph = currentParagraph.trim();
+                        if (trimmedParagraph !== '') {
+                            fullText += trimmedParagraph + '\n';
+                        }
+                        currentParagraph = item.str + ' ';
+                    }
+                    lastY = item.transform[5];
+                });
+
+                const trimmedParagraph = currentParagraph.trim();
+                if (trimmedParagraph !== '') {
+                    fullText += trimmedParagraph + '\n';
+                }
+
+                allText += fullText;
+                //allText = allText.replace(/\n\n/g, ' '); 
+
+                currentParagraph = '';
+                lastY = null;
+            }
+
+            const regex = /^(.*?) +(BORME-.*?) +\((\d+)\)\n/gm;
+            // const regex = /(^\d+) - (.*)+\n((.*)+)\n/gm;
+            const paragrafList = document.getElementById('paragrafList');
+
+            let regexMatches;
+            let jsonArray = [];
+
+            while ((regexMatches = regex.exec(allText)) !== null) {
+                const societat = regexMatches[1];
+                const borme = regexMatches[2];
+                const codi = regexMatches[3];
+
+                const jsonObject = {
+                    Societat: societat,
+                    Borme: borme,
+                    Codi: codi,
+                };
+
+                jsonArray.push(jsonObject);
+            }
+
+            const jsonString = JSON.stringify(jsonArray, null, 2);
+            return jsonArray;
+
+        } catch (error) {
+            console.error("No s'ha trobat cap BORME d'aquesta data.", error);
+            alert("No s'ha trobat cap BORME d'aquesta data.");
+        }
+    }
+
+
+    // FUNCIÓ PER EXTREURE EL LLISTAT D'ENTITATS DEL RSP DE DADES OBERTES
 
     async function getEntitats() {
-      const url = 'https://analisi.transparenciacatalunya.cat/resource/gr39-ik6u.json';
+        const url = 'https://analisi.transparenciacatalunya.cat/resource/gr39-ik6u.json';
 
-      try {
-        const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                const data = await response.json();
 
-          const entitats = [];
-          for (const d of data) {
-            if (Object.keys(d).length > 0) {
-              entitats.push(d.denominaci);
+                const entitats = [];
+                for (const d of data) {
+                    if (Object.keys(d).length > 0) {
+                        entitats.push(d.denominaci);
+                    }
+                }
+
+		// Afegir noms desactualitzats d'entitats
+
+                const entitats2 = [
+                    ['ICF Banc, Entitat de Crèdit, SAU'],
+                    ['LoteriesdeCatalunyaSAU'],
+                    ['LoteriesdeCatalunyaSA'],
+                    ['CorporacióCatalanadeMitjansAudiovisualsSA'],
+                    ['CorporacioCatalanadeMitjansAudiovisualsSA'],
+                    ['TeatreNacionaldeCatalunyaSA'],
+                    ['InfraestructuresdelaGeneralitatdeCatalunyaSAU'],
+                    ['InfraestructuresdelaGeneralitatdeCatalunyaSA'],
+                    ['EquacatSA'],
+                    ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogístiquesSAU(CIMALSA)'],
+                    ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogístiquesSA'],
+                    ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogístiquesSAU'],
+                    ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogistiquesSAU(CIMALSA)'],
+                    ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogistiquesSA'],
+                    ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogistiquesSAU'],
+                    ["Promotorad'ExportacionsCatalanesSA"],
+                    ['EmpresadePromocióiLocalitzacióIndustrialdeCatalunyaSA(AVANÇSA)'],
+                    ['EmpresadePromocióiLocalitzacióIndustrialdeCatalunyaSA'],
+                    ['EmpresadePromocioiLocalitzacióIndustrialdeCatalunyaSA(AVANÇSA)'],
+                    ['EmpresadePromocioiLocalitzacióIndustrialdeCatalunyaSA'],
+                    ['ForestalCatalanaSA'],
+                    ["Sistemad'EmergènciesMèdiquesSA"],
+                    ["Sistemad'EmergenciesMediquesSA"],
+                    ['TVCMultimèdiaSL'],
+                    ['TVCMultimediaSL'],
+                    ['IntracatalòniaSA'],
+                    ['IntracataloniaSA'],
+                    ['InstitutCatalàdeFinancesCapitalSGEICSA'],
+                    ['InstitutCataladeFinancesCapitalSGEICSA'],
+                    ['InstitutCatalàdeFinancesCapitalSGECRSA'],
+                    ['InstitutCataladeFinancesCapitalSGECRSA'],
+                    ['CargometroRailTransportSA'],
+                    ['CoordinacióLogísticaSanitàriaAIE'],
+                    ['CoordinacioLogisticaSanitariaAIE'],
+                    ['ComercialdelaForjaSA'],
+                    ['Fira2000SA'],
+                    ["TerminalIntermodaldel'EmpordaSL"],
+                    ['SabadellGentGranCentredeServeisSA'],
+                    ['VallterSA'],
+                    ['LogaritmeServeisLogísticsAIE'],
+                    ['LogaritmeServeisLogisticsAIE'],
+                    ['ParcTecnològicdelVallèsSA'],
+                    ['ParcTecnologicdelVallesSA'],
+                    ['AeroportsPúblicsdeCatalunyaSL'],
+                    ['AeroportsPublicsdeCatalunyaSL'],
+                    ['BarcelonaSagreraAltaVelocitatSA'],
+                    ['CircuitsdeCatalunyaSL'],
+                    ['InstrumentsFinancersperaEmpresesInnovadoresSL(IFEM)'],
+                    ['InstrumentsFinancersperaEmpresesInnovadoresSL'],
+                    ["Societatd'EstibadelsPortsCatalansSA"],
+                    ['AutometroSA'],
+                    ['CircuitdeMotocròsdeCatalunyaSL'],
+                    ['CircuitdeMotocrosdeCatalunyaSL'],
+                    ['ArrendadoraFerroviàriaSA'],
+                    ['ArrendadoraFerroviariaSA'],
+                    ['BarnaclínicSA'],
+                    ['BarnaclinicSA'],
+                    ['LuxquantaTechnologiesSL'],
+                    ['NuageTherapeuticsSL'],
+                    ['ALLREADMACHINELEARNINGTECHNOLOGIESSL'],
+                    ['INNOVATIVESOLUTIONSECOSYSTEMSA'],
+                    ['LaSedadeBarcelonaSA'],
+                    ['SabadellAsabysHealthInnovationInvestmentsSCRSA'],
+                    ['InvereadyBiotechIIISCRSA'],
+                    ['InvereadyFirstCapitalIIISCRSA'],
+                    ['ActiusdeMuntanyaSA'],
+                    ['DevicareSL'],
+                    ['WatchitySL'],
+                    ['AvalisdeCatalunyaSGR'],
+                    ['BarcelonaEmprènSCRSA'],
+                    ['BarcelonaEmprenSCRSA'],
+                    ["BiomassadelesTerresdel'EbreSAenliquidació"],
+                    ["BiomassadelesTerresdel'EbreSAenliquidacio"],
+                    ["BiomassadelesTerresdel'EbreSA"],
+                    ['CaixaCapitalTICSCRSA'],
+                    ["Catalanad'IniciativesSA"],
+                    ['CentrodeEnsayosInnovaciónyServiciosSL'],
+                    ['CentrodeEnsayosInnovacionyServiciosSL'],
+                    ['CombustiblesEcològicsCatalansSAenliquidació'],
+                    ['CombustiblesEcològicsCatalansSA'],
+                    ['CombustiblesEcologicsCatalansSAenliquidaco'],
+                    ['CombustiblesEcologicsCatalansSA'],
+                    ['CRCMarSA'],
+                    ['CreapolisParcdelaCreativitatSA'],
+                    ['EAPOsonaSudAltCongostSLP'],
+                    ['EmpresadeTransformaciónAgrariaSASMEMP'],
+                    ['EmpresadeTransformaciónAgrariaSA'],
+                    ['EmpresadeTransformacionAgrariaSASMEMP'],
+                    ['EmpresadeTransformacionAgrariaSA'],
+                    ['EraBiotechSA'],
+                    ['FinavesIVSA'],
+                    ['HabitacSL'],
+                    ['HealthequitySCRSA'],
+                    ['IDIADAAutomotiveTechnologySA'],
+                    ['ImatgeMèdicaIntercentresSL'],
+                    ['ImatgeMedicaIntercentresSL'],
+                    ['AirbusDSGeoSGSA'],
+                    ['IngeniaCapitalSA'],
+                    ['InvereadyInnvierteBiotechIISCRSA'],
+                    ['InvereadyFirstCapitalSCRSA'],
+                    ['InvereadyVentureFinanceISCR-PYMESA'],
+                    ['InvereadyVentureFinanceISCR'],
+                    ['LaboratorideReferènciadeCatalunyaSA'],
+                    ['LaboratorideReferenciadeCatalunyaSA'],
+                    ['LGAITechnologicalCenterSA'],
+                    ['LlotjaAgropecuàriaMercolleidaSA'],
+                    ['LlotjaAgropecuariaMercolleidaSA'],
+                    ['MegaframAIEenliquidació'],
+                    ['MegaframAIEenliquidacio'],
+                    ['NautaTechInvestIISCRSA'],
+                    ['NautaTechInvestIIISCRSA'],
+                    ['ParcAudiovisualdeCatalunyaSL'],
+                    ['ParcEòlicBaixEbreSA'],
+                    ['ParcEolicBaixEbreSA'],
+                    ['RencatAIE'],
+                    ['SermetraSL'],
+                    ["Serveid'IncineraciódelsResidusUrbansSA(SIRUSA)"],
+                    ["Serveid'IncineraciódelsResidusUrbansSA"],
+                    ["Serveid'IncineraciodelsResidusUrbansSA(SIRUSA)"],
+                    ["Serveid'IncineraciodelsResidusUrbansSA"],
+                    ['ServeisAuxiliarsalaSanitatAIE'],
+                    ['SocietatAnónimadeValoritzacionsAgroramaderesenliquidació'],
+                    ['SocietatAnónimadeValoritzacionsAgroramaderes'],
+                    ['SocietatAnonimadeValoritzacionsAgroramaderesenliquidacio'],
+                    ['SocietatAnonimadeValoritzacionsAgroramaderes'],
+                    ['SocietatCatalanadePetrolisSA'],
+                    ["SocietatEòlicadel'EnderrocadaSA"],
+                    ["SocietatEolicadel'EnderrocadaSA"],
+                    ['SpinnakerInvestSCRSA'],
+                    ['SuceramEnergiaElèctricaAIE'],
+                    ['SuceramEnergiaElectricaAIE'],
+                    ['TorredeCollserolaSA'],
+                    ['TramviaMetropolitàdelBesòsSA'],
+                    ['TramviaMetropolitadelBesosSA'],
+                    ['TramviaMetropolitàSA'],
+                    ['TramviaMetropolitaSA'],
+                    ['VenturcapIISCRSA'],
+                    ['GestoradeRunesdelaConstruccióSA'],
+                    ['GestoradeRunesdelaConstruccioSA'],
+                    ['CatlabCentreAnalítiquesTerrassaAIE'],
+                    ['CatlabCentreAnalitiquesTerrassaAIE'],
+                    ["ConsorcideSalutid'AtencióSocialdeCatalunyaSA"],
+                    ["ConsorcideSalutid'AtencioSocialdeCatalunyaSA"],
+                    ['Interhospitalia-2AIE'],
+                    ["PoligeneracióParcdel'AlbaST4SA"],
+                    ["PoligeneracioParcdel'AlbaST4SA"],
+                    ['CaixaCapitalBiomedSCRSA'],
+                    ['CaixaInnvierteIndustriaSCRSA'],
+                    ['AprovisionamentsSantaTeclaAIE'],
+                    ['NetejaSantaTeclaAIE'],
+                    ['CimneTecnologiaSA'],
+                    ['CompassIngenieríaySistemasSA'],
+                    ['ComputationalandInformationTechnologiesSA'],
+                    ['FreshWaterNatureSL'],
+                    ['BuildairIngenieriayArquitecturaSA'],
+                    ['BuildairIngenieríayArquitecturaSA'],
+                    ['LyncosTechnologiesSL'],
+                    ['PortableMultimediaSolutionsSL'],
+                    ['HealthappSL'],
+                    ['FGCRAILSA'],
+                    ['SocietatCatalanaperalaMobilitatSA'],
+                    ['ForestBioengineeringSolutionsSAU'],
+                    ['ForestBioengineeringSolutionsSA'],
+                    ['RobSurgicalSystemsSL'],
+                    ['BeedataAnalyticsSL'],
+                    ['VirtualBodyworksSL'],
+                    ['NostrumBioDiscoverySL'],
+                    ['AelixTherapeuticsSL'],
+                    ['PeptomycSL'],
+                    ['EodyneSystemsSL'],
+                    ['InnovexTherapeuticsSL'],
+                    ['BraingazeSL'],
+                    ['ScipediaSL'],
+                    ['VisualTaggingServicesSL'],
+                    ['FueliumSL'],
+                    ['PaperdropDiagnosticsSL'],
+                    ['GassoCimneInergySL'],
+                    ['PneumaticStructuresTechnologiesSL'],
+                    ['InlocRoboticsSL'],
+                    ['ProcarelightSL'],
+                    ['HemophotonicsSL'],
+                    ['TransplantBiotechSL'],
+                    ['SpecificPigSL'],
+                    ['ChemotargetsSL'],
+                    ['ManresanadeMicrobacteriologiaSL'],
+                    ['SumaCapitalGrowthFundISCRSA'],
+                    ['OrchestraScientificSL'],
+                    ['MicroomicsSystemsSL'],
+                    ['QuantitativeGenomicMedicineLaboratoriesSL'],
+                    ['SeqeraLabsSL'],
+                    ['EuronaWirelessTelecomSA'],
+                    ['MercadosdeAbastecimientosdeBarcelonaSA'],
+                    ['NeosSurgerySL'],
+                    ['GEIEFORESPIR'],
+                    ['QusideTechnologiesSL'],
+                    ['AuricaIIIBSCRSA'],
+                    ['TreellumTechnologiesSL'],
+                    ['MarinadeBadalonaSA'],
+                    ['OnaTherapeuticsSL'],
+                    ['PentabilitiesSL'],
+                    ['MiwendoSolutionsSL'],
+                    ['InbrainNeuroelectronicsSL'],
+                    ['OnechainImnunotherapeuticsSL'],
+                    ['PulmobioticsSL'],
+                    ['QurvTechnologiesSL'],
+                    ['AheadTherapeuticsSL'],
+                    ['NorthernMosaicLP'],
+                    ['PaloBiofarmaSL'],
+                    ['FGCMOBILITATSA'],
+                    ['OmniScopeLimited'],
+                    ['SixsensoTechnologiesSL'],
+                    ['BaretekBarcelonaDetectorTechnologiesSL'],
+                    ['DeepDetectionSL'],
+                    ['OrikineBioSL'],
+                    ['EnergiesRenovablesPubliquesDeCatalunyaSA'],
+                    ['EnergiesRenovablesPubliquesDeCatalunyaSAU'],
+                    ['EnergiesRenovablesPúbliquesDeCatalunyaSA'],
+                    ['EnergiesRenovablesPúbliquesDeCatalunyaSAU']
+                ]; // Afegeix les entitats de la llista entitats2
+
+                const flat_list = entitats2.flat();
+                const finalEntitats = entitats.concat(flat_list);
+
+                const entitats3 = finalEntitats.map(processEntitat);
+
+                // La variable 'entitats3' conté la llista processada
+
+                // Elimina els signes de puntuació
+                const entitatsSensePuntuacio = entitats3.map(eliminarPuntuacio);
+
+                // La variable 'entitatsSensePuntuacio' conté les dades sense signes de puntuació
+                return entitatsSensePuntuacio;
+            } else {
+                console.error('Error en la petició');
             }
-          }
-
-          const entitats2 = [['ICF Banc, Entitat de Crèdit, SAU'], ['LoteriesdeCatalunyaSAU'], ['LoteriesdeCatalunyaSA'], ['CorporacióCatalanadeMitjansAudiovisualsSA'], ['CorporacioCatalanadeMitjansAudiovisualsSA'], ['TeatreNacionaldeCatalunyaSA'], ['InfraestructuresdelaGeneralitatdeCatalunyaSAU'], ['InfraestructuresdelaGeneralitatdeCatalunyaSA'], ['EquacatSA'], ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogístiquesSAU(CIMALSA)'], ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogístiquesSA'], ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogístiquesSAU'], ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogistiquesSAU(CIMALSA)'], ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogistiquesSA'], ['CentralsiInfraestructuresperalaMobilitatilesActivitatsLogistiquesSAU'], ["Promotorad'ExportacionsCatalanesSA"], ['EmpresadePromocióiLocalitzacióIndustrialdeCatalunyaSA(AVANÇSA)'], ['EmpresadePromocióiLocalitzacióIndustrialdeCatalunyaSA'], ['EmpresadePromocioiLocalitzacióIndustrialdeCatalunyaSA(AVANÇSA)'], ['EmpresadePromocioiLocalitzacióIndustrialdeCatalunyaSA'], ['ForestalCatalanaSA'], ["Sistemad'EmergènciesMèdiquesSA"], ["Sistemad'EmergenciesMediquesSA"], ['TVCMultimèdiaSL'], ['TVCMultimediaSL'], ['IntracatalòniaSA'], ['IntracataloniaSA'], ['InstitutCatalàdeFinancesCapitalSGEICSA'], ['InstitutCataladeFinancesCapitalSGEICSA'],
-['InstitutCatalàdeFinancesCapitalSGECRSA'], ['InstitutCataladeFinancesCapitalSGECRSA'], ['CargometroRailTransportSA'], ['CoordinacióLogísticaSanitàriaAIE'], ['CoordinacioLogisticaSanitariaAIE'], ['ComercialdelaForjaSA'], ['Fira2000SA'], ["TerminalIntermodaldel'EmpordaSL"], ['SabadellGentGranCentredeServeisSA'], ['VallterSA'], ['LogaritmeServeisLogísticsAIE'], ['LogaritmeServeisLogisticsAIE'], ['ParcTecnològicdelVallèsSA'], ['ParcTecnologicdelVallesSA'], ['AeroportsPúblicsdeCatalunyaSL'], ['AeroportsPublicsdeCatalunyaSL'], ['BarcelonaSagreraAltaVelocitatSA'], ['CircuitsdeCatalunyaSL'], ['InstrumentsFinancersperaEmpresesInnovadoresSL(IFEM)'], ['InstrumentsFinancersperaEmpresesInnovadoresSL'], ["Societatd'EstibadelsPortsCatalansSA"], ['AutometroSA'], ['CircuitdeMotocròsdeCatalunyaSL'], ['CircuitdeMotocrosdeCatalunyaSL'], ['ArrendadoraFerroviàriaSA'], ['ArrendadoraFerroviariaSA'], ['BarnaclínicSA'], ['BarnaclinicSA'], ['LuxquantaTechnologiesSL'], ['NuageTherapeuticsSL'], ['ALLREADMACHINELEARNINGTECHNOLOGIESSL'], ['INNOVATIVESOLUTIONSECOSYSTEMSA'], ['LaSedadeBarcelonaSA'], ['SabadellAsabysHealthInnovationInvestmentsSCRSA'], ['InvereadyBiotechIIISCRSA'], ['InvereadyFirstCapitalIIISCRSA'], ['ActiusdeMuntanyaSA'], ['DevicareSL'], ['WatchitySL'], ['AvalisdeCatalunyaSGR'], ['BarcelonaEmprènSCRSA'], ['BarcelonaEmprenSCRSA'], ["BiomassadelesTerresdel'EbreSAenliquidació"], ["BiomassadelesTerresdel'EbreSAenliquidacio"], ["BiomassadelesTerresdel'EbreSA"], ['CaixaCapitalTICSCRSA'], ["Catalanad'IniciativesSA"], ['CentrodeEnsayosInnovaciónyServiciosSL'], ['CentrodeEnsayosInnovacionyServiciosSL'], ['CombustiblesEcològicsCatalansSAenliquidació'], ['CombustiblesEcològicsCatalansSA'], ['CombustiblesEcologicsCatalansSAenliquidaco'], ['CombustiblesEcologicsCatalansSA'], ['CRCMarSA'], ['CreapolisParcdelaCreativitatSA'], ['EAPOsonaSudAltCongostSLP'], ['EmpresadeTransformaciónAgrariaSASMEMP'], ['EmpresadeTransformaciónAgrariaSA'], ['EmpresadeTransformacionAgrariaSASMEMP'], ['EmpresadeTransformacionAgrariaSA'], ['EraBiotechSA'], ['FinavesIVSA'], ['HabitacSL'], ['HealthequitySCRSA'], ['IDIADAAutomotiveTechnologySA'], ['ImatgeMèdicaIntercentresSL'], ['ImatgeMedicaIntercentresSL'], ['AirbusDSGeoSGSA'], ['IngeniaCapitalSA'], ['InvereadyInnvierteBiotechIISCRSA'], ['InvereadyFirstCapitalSCRSA'], ['InvereadyVentureFinanceISCR-PYMESA'], ['InvereadyVentureFinanceISCR'], ['LaboratorideReferènciadeCatalunyaSA'], ['LaboratorideReferenciadeCatalunyaSA'], ['LGAITechnologicalCenterSA'], ['LlotjaAgropecuàriaMercolleidaSA'], ['LlotjaAgropecuariaMercolleidaSA'], ['MegaframAIEenliquidació'], ['MegaframAIEenliquidacio'], ['NautaTechInvestIISCRSA'], ['NautaTechInvestIIISCRSA'], ['ParcAudiovisualdeCatalunyaSL'], ['ParcEòlicBaixEbreSA'], ['ParcEolicBaixEbreSA'], ['RencatAIE'], ['SermetraSL'], ["Serveid'IncineraciódelsResidusUrbansSA(SIRUSA)"], ["Serveid'IncineraciódelsResidusUrbansSA"], ["Serveid'IncineraciodelsResidusUrbansSA(SIRUSA)"], ["Serveid'IncineraciodelsResidusUrbansSA"], ['ServeisAuxiliarsalaSanitatAIE'], ['SocietatAnónimadeValoritzacionsAgroramaderesenliquidació'], ['SocietatAnónimadeValoritzacionsAgroramaderes'], ['SocietatAnonimadeValoritzacionsAgroramaderesenliquidacio'], ['SocietatAnonimadeValoritzacionsAgroramaderes'], ['SocietatCatalanadePetrolisSA'], ["SocietatEòlicadel'EnderrocadaSA"], ["SocietatEolicadel'EnderrocadaSA"], ['SpinnakerInvestSCRSA'], ['SuceramEnergiaElèctricaAIE'], ['SuceramEnergiaElectricaAIE'], ['TorredeCollserolaSA'], ['TramviaMetropolitàdelBesòsSA'], ['TramviaMetropolitadelBesosSA'], ['TramviaMetropolitàSA'], ['TramviaMetropolitaSA'], ['VenturcapIISCRSA'], ['GestoradeRunesdelaConstruccióSA'], ['GestoradeRunesdelaConstruccioSA'], ['CatlabCentreAnalítiquesTerrassaAIE'], ['CatlabCentreAnalitiquesTerrassaAIE'], ["ConsorcideSalutid'AtencióSocialdeCatalunyaSA"], ["ConsorcideSalutid'AtencioSocialdeCatalunyaSA"], ['Interhospitalia-2AIE'], ["PoligeneracióParcdel'AlbaST4SA"], ["PoligeneracioParcdel'AlbaST4SA"], ['CaixaCapitalBiomedSCRSA'], ['CaixaInnvierteIndustriaSCRSA'], ['AprovisionamentsSantaTeclaAIE'], ['NetejaSantaTeclaAIE'], ['CimneTecnologiaSA'], ['CompassIngenieríaySistemasSA'], ['ComputationalandInformationTechnologiesSA'], ['FreshWaterNatureSL'], ['BuildairIngenieriayArquitecturaSA'], ['BuildairIngenieríayArquitecturaSA'], ['LyncosTechnologiesSL'], ['PortableMultimediaSolutionsSL'], ['HealthappSL'], ['FGCRAILSA'], ['SocietatCatalanaperalaMobilitatSA'], ['ForestBioengineeringSolutionsSAU'], ['ForestBioengineeringSolutionsSA'], ['RobSurgicalSystemsSL'], ['BeedataAnalyticsSL'], ['VirtualBodyworksSL'], ['NostrumBioDiscoverySL'], ['AelixTherapeuticsSL'], ['PeptomycSL'], ['EodyneSystemsSL'], ['InnovexTherapeuticsSL'], ['BraingazeSL'], ['ScipediaSL'], ['VisualTaggingServicesSL'], ['FueliumSL'], ['PaperdropDiagnosticsSL'], ['GassoCimneInergySL'], ['PneumaticStructuresTechnologiesSL'], ['InlocRoboticsSL'], ['ProcarelightSL'], ['HemophotonicsSL'], ['TransplantBiotechSL'], ['SpecificPigSL'], ['ChemotargetsSL'], ['ManresanadeMicrobacteriologiaSL'], ['SumaCapitalGrowthFundISCRSA'], ['OrchestraScientificSL'], ['MicroomicsSystemsSL'], ['QuantitativeGenomicMedicineLaboratoriesSL'], ['SeqeraLabsSL'], ['EuronaWirelessTelecomSA'], ['MercadosdeAbastecimientosdeBarcelonaSA'], ['NeosSurgerySL'], ['GEIEFORESPIR'], ['QusideTechnologiesSL'], ['AuricaIIIBSCRSA'], ['TreellumTechnologiesSL'], ['MarinadeBadalonaSA'], ['OnaTherapeuticsSL'], ['PentabilitiesSL'], ['MiwendoSolutionsSL'], ['InbrainNeuroelectronicsSL'], ['OnechainImnunotherapeuticsSL'], ['PulmobioticsSL'], ['QurvTechnologiesSL'], ['AheadTherapeuticsSL'], ['NorthernMosaicLP'], ['PaloBiofarmaSL'], ['FGCMOBILITATSA'], ['OmniScopeLimited'], ['SixsensoTechnologiesSL'], ['BaretekBarcelonaDetectorTechnologiesSL'], ['DeepDetectionSL'], ['OrikineBioSL'], ['EnergiesRenovablesPubliquesDeCatalunyaSA'], ['EnergiesRenovablesPubliquesDeCatalunyaSAU'], ['EnergiesRenovablesPúbliquesDeCatalunyaSA'], ['EnergiesRenovablesPúbliquesDeCatalunyaSAU']]; // Afegeix les entitats de la llista entitats2
-
-          const flat_list = entitats2.flat();
-          const finalEntitats = entitats.concat(flat_list);
-
-          const entitats3 = finalEntitats.map(processEntitat);
-
-          // La variable 'entitats3' conté la llista processada
-
-          // Elimina els signes de puntuació
-          const entitatsSensePuntuacio = entitats3.map(eliminarPuntuacio);
-
-          // La variable 'entitatsSensePuntuacio' conté les dades sense signes de puntuació
-          return entitatsSensePuntuacio;
-        } else {
-          console.error('Error en la petició');
+        } catch (error) {
+            console.error('Error en la petició', error);
         }
-      } catch (error) {
-        console.error('Error en la petició', error);
-      }
     }
 
     function processEntitat(entitat) {
-      return entitat.split(" ").map(paraula => {
-        return paraula.replace(/\([^)]*\)|\bSA?\b|\bSL?\b|\bAIE?\b|\bSAU?\b|\bSAL?\b/g, '').trim();
-      }).join(" ");
+        return entitat.split(" ").map(paraula => {
+            return paraula.replace(/\([^)]*\)|\bSA?\b|\bSL?\b|\bAIE?\b|\bSAU?\b|\bSAL?\b/g, '').trim();
+        }).join(" ");
     }
 
     function eliminarPuntuacio(text) {
-      return text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').trim();
+        return text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').trim();
     }
 
 
 
-// BUSCAR SOCIETATS DEL RSP A L'ÍNDEX DEL BORME
+    // BUSCAR SOCIETATS DEL RSP A L'ÍNDEX DEL BORME
 
-// RETORNA LES COINCIDÈNCIES ENTRE LLISTA SOCIETATS RSP I L'ÍNDEX DEL BORME
+    // RETORNA LES COINCIDÈNCIES ENTRE LLISTA SOCIETATS RSP I L'ÍNDEX DEL BORME
 
-async function coincidencies() {
-  try {
-    // Espera que l'objecte JSON sigui creat
-    const indexBORME = await getTextFromPDF();
-    const entitats = await getEntitats();
+    async function coincidencies() {
+        try {
+            // Espera que l'objecte JSON sigui creat
+            const indexBORME = await getTextFromPDF();
+            const entitats = await getEntitats();
 
-    // Ara pots utilitzar jsonObject amb seguretat
-    
-    // console.log(entitats);
-    // console.log(indexBORME);
+            // Ara pots utilitzar jsonObject amb seguretat
 
-    // FER EL PROGRAMA AQUÍ!!!
+            // console.log(entitats);
+            // console.log(indexBORME);
 
-    function mostrarRegistresCoincidents(entitats, indexBORME) {
-      // Filtra els registres de "indexBORME" que coincideixen amb les entitats
-      const registresCoincidents = indexBORME.filter(registre => {
-        const nomSocietat = registre.Societat.toLowerCase().replace(/\s/g, '');
-        return entitats.some(entitat => nomSocietat.includes(entitat.toLowerCase().replace(/\s/g, '')));
-      });
+            // FER EL PROGRAMA AQUÍ!!!
 
-      return registresCoincidents;
-    }
+            function mostrarRegistresCoincidents(entitats, indexBORME) {
+                // Filtra els registres de "indexBORME" que coincideixen amb les entitats
+                const registresCoincidents = indexBORME.filter(registre => {
+                    const nomSocietat = registre.Societat.toLowerCase().replace(/\s/g, '');
+                    return entitats.some(entitat => nomSocietat.includes(entitat.toLowerCase().replace(/\s/g, '')));
+                });
 
-    const registresCoincidents = mostrarRegistresCoincidents(entitats, indexBORME);
-    // console.log(registresCoincidents);
+                return registresCoincidents;
+            }
 
-    return registresCoincidents;
+            const registresCoincidents = mostrarRegistresCoincidents(entitats, indexBORME);
+            // console.log(registresCoincidents);
 
-  } catch (error) {
-    console.error('Hi ha hagut un error:', error);
-  }
-}
+            return registresCoincidents;
 
-
-
-
-// CREAR FUNCIÓ PER OBTENIR LES INSCRIPCIONS DELS BORMES SELECCIONATS I DESCARREGAR-LES EN FORMAT EXCEL
-
-async function extraccio() {
-  try {
-    // Espera que l'objecte JSON sigui creat
-    const extreure = await coincidencies();
-    
-    // Ara pots utilitzar jsonObject amb seguretat
-
-    // FER EL PROGRAMA AQUÍ!!!
-
-// Construir URLs dels BORMEs a consultar i afegir-les a un nou camp del JSON
-
-extreure.forEach((registre) => {
-  registre.URL = `https://www.boe.es/borme/dias/` + dataEnFormatAAAAMMDD + `/pdfs/${registre.Borme}.pdf`;
-});
-
-console.log(extreure);
-
-return extreure;
-
-  } catch (error) {
-    console.error('Hi ha hagut un error:', error);
-  }
-}
-
-async function matriuConsulta() {
-  try {
-    const dadesAmbURLs = await extraccio();
-    const resultatsGlobals = []; // Variable per emmagatzemar tots els resultats
-
-    for (const registre of dadesAmbURLs) {
-      const codiUnicMap = new Map(); // Mapa per emmagatzemar codis únics
-      if (!codiUnicMap.has(registre.URL)) {
-        codiUnicMap.set(registre.URL, [registre.Codi]);
-      } else {
-        codiUnicMap.get(registre.URL).push(registre.Codi);
-      }
-
-      const url = registre.URL;
-      const codis = codiUnicMap.get(url);
-
-      try {
-        const resultats = await extreureTextBorme(url, codis);
-        if (resultats.length > 0) {
-          // Imprimeix els resultats de cada PDF
-          console.log('Resultats per a URL:', url);
-          console.log(resultats);
-          resultatsGlobals.push(...resultats); // Afegir els resultats a la variable global
+        } catch (error) {
+            console.error('Hi ha hagut un error:', error);
         }
-      } catch (pdfError) {
-        console.error(`Hi ha hagut un error en processar el PDF de la URL ${url}: ${pdfError}`);
-      }
     }
 
-if (resultatsGlobals && resultatsGlobals.length > 0) {
-  // Crear un full de càlcul amb tots els resultats
-  const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Dades");
-
-  // Descarregar l'arxiu XLSX
-  XLSX.writeFile(wb, 'dades.xlsx');
-
-  alert("XLSX DESCARREGAT"); 
-
-} else {
-  alert("No s'ha trobat cap entitat del RSP al BORME analitzat");
-}
-
-  } catch (error) {
-    console.error('Hi ha hagut un error:', error);
-  }
-}
 
 
-// Crida la funció per extreure la matriu de consulta
-matriuConsulta();
+    // CREAR FUNCIÓ PER OBTENIR LES INSCRIPCIONS DELS BORMES SELECCIONATS I DESCARREGAR-LES EN FORMAT XLSX
 
-async function extreureTextBorme(url, codis) {
-  const pdfUrl = 'https://cors-anywhere.herokuapp.com/' + url;
-  console.log(pdfUrl);
-  
-  const pdfjsLib = window['pdfjs-dist/build/pdf'];
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    async function extraccio() {
+        try {
+            // Espera que l'objecte JSON sigui creat
+            const extreure = await coincidencies();
 
-  const response = await fetch(pdfUrl);
-  const arrayBuffer = await response.arrayBuffer();
-  const pdfData = new Uint8Array(arrayBuffer);
+            // Ara pots utilitzar jsonObject amb seguretat
 
-  try {
-    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+            // FER EL PROGRAMA AQUÍ!!!
 
-    let allText = '';
-    let currentParagraph = ''; 
-    let lastY = null;
-    const MIN_Y_DIFFERENCE = 10; 
+            // Construir URLs dels BORMEs a consultar i afegir-les a un nou camp del JSON
 
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-      const page = await pdf.getPage(pageNumber);
-      const textContent = await page.getTextContent();
+            extreure.forEach((registre) => {
+                registre.URL = `https://www.boe.es/borme/dias/` + dataEnFormatAAAAMMDD + `/pdfs/${registre.Borme}.pdf`;
+            });
 
-      let fullText = ''; 
+            console.log(extreure);
 
-      textContent.items.forEach(item => {
-        if (lastY === null || Math.abs(item.transform[5] - lastY) <= MIN_Y_DIFFERENCE) {
-          currentParagraph += item.str + ' ';
-        } else {
-          const trimmedParagraph = currentParagraph.trim();
-          if (trimmedParagraph !== '') {
-            fullText += trimmedParagraph + '\n';
-          }
-          currentParagraph = item.str + ' ';
+            return extreure;
+
+        } catch (error) {
+            console.error('Hi ha hagut un error:', error);
         }
-        lastY = item.transform[5];
-      });
-
-      const trimmedParagraph = currentParagraph.trim();
-      if (trimmedParagraph !== '') {
-        fullText += trimmedParagraph + '\n';
-      }
-
-      allText += fullText;
-      allText = allText.replace(/\n\n/g, ' '); 
-
-      currentParagraph = '';
-      lastY = null;
     }
 
-    const regex = /(^\d+) - (.*)+\n((.*)+)\n/gm;
-    const paragrafList = document.getElementById('paragrafList');
+    async function matriuConsulta() {
+        try {
+            const dadesAmbURLs = await extraccio();
+            const resultatsGlobals = []; // Variable per emmagatzemar tots els resultats
 
-    let regexMatches;
-    let jsonArray = []; 
+            for (const registre of dadesAmbURLs) {
+                const codiUnicMap = new Map(); // Mapa per emmagatzemar codis únics
+                if (!codiUnicMap.has(registre.URL)) {
+                    codiUnicMap.set(registre.URL, [registre.Codi]);
+                } else {
+                    codiUnicMap.get(registre.URL).push(registre.Codi);
+                }
 
-    while ((regexMatches = regex.exec(allText)) !== null) {
-      const codi = regexMatches[1];
-      const societat = regexMatches[2];
-      const inscripcio = regexMatches[3];
+                const url = registre.URL;
+                const codis = codiUnicMap.get(url);
 
-      if (codis.includes(codi)) {
-        const jsonObject = {
-          Codi: codi,
-	  URL: url,
-          Societat: societat,
-          Inscripcio: inscripcio,
-        };
-        jsonArray.push(jsonObject);
-      }
+                try {
+                    const resultats = await extreureTextBorme(url, codis);
+                    if (resultats.length > 0) {
+                        // Imprimeix els resultats de cada PDF
+                        console.log('Resultats per a URL:', url);
+                        console.log(resultats);
+                        resultatsGlobals.push(...resultats); // Afegir els resultats a la variable global
+                    }
+                } catch (pdfError) {
+                    console.error(`Hi ha hagut un error en processar el PDF de la URL ${url}: ${pdfError}`);
+                }
+            }
+
+            if (resultatsGlobals && resultatsGlobals.length > 0) {
+                // Crear un full de càlcul amb tots els resultats
+                const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Dades");
+
+                // Descarregar l'arxiu XLSX
+                XLSX.writeFile(wb, 'dades.xlsx');
+
+                alert("XLSX DESCARREGAT");
+
+            } else {
+                alert("No s'ha trobat cap entitat del RSP al BORME analitzat");
+            }
+
+        } catch (error) {
+            console.error('Hi ha hagut un error:', error);
+        }
     }
 
-    return jsonArray;
 
-  } catch (error) {
-    console.error('Hi ha hagut un error en processar el PDF:', error);
-    alert('Hi ha hagut un error en processar el PDF.');
-  }
-}
+    // Crida la funció per extreure la matriu de consulta
+    matriuConsulta();
+
+    async function extreureTextBorme(url, codis) {
+        const pdfUrl = 'https://cors-anywhere.herokuapp.com/' + url;
+        console.log(pdfUrl);
+
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const response = await fetch(pdfUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const pdfData = new Uint8Array(arrayBuffer);
+
+        try {
+            const pdf = await pdfjsLib.getDocument({
+                data: pdfData
+            }).promise;
+
+            let allText = '';
+            let currentParagraph = '';
+            let lastY = null;
+            const MIN_Y_DIFFERENCE = 10;
+
+            for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                const page = await pdf.getPage(pageNumber);
+                const textContent = await page.getTextContent();
+
+                let fullText = '';
+
+                textContent.items.forEach(item => {
+                    if (lastY === null || Math.abs(item.transform[5] - lastY) <= MIN_Y_DIFFERENCE) {
+                        currentParagraph += item.str + ' ';
+                    } else {
+                        const trimmedParagraph = currentParagraph.trim();
+                        if (trimmedParagraph !== '') {
+                            fullText += trimmedParagraph + '\n';
+                        }
+                        currentParagraph = item.str + ' ';
+                    }
+                    lastY = item.transform[5];
+                });
+
+                const trimmedParagraph = currentParagraph.trim();
+                if (trimmedParagraph !== '') {
+                    fullText += trimmedParagraph + '\n';
+                }
+
+                allText += fullText;
+                allText = allText.replace(/\n\n/g, ' ');
+
+                currentParagraph = '';
+                lastY = null;
+            }
+
+            const regex = /(^\d+) - (.*)+\n((.*)+)\n/gm;
+            const paragrafList = document.getElementById('paragrafList');
+
+            let regexMatches;
+            let jsonArray = [];
+
+            while ((regexMatches = regex.exec(allText)) !== null) {
+                const codi = regexMatches[1];
+                const societat = regexMatches[2];
+                const inscripcio = regexMatches[3];
+
+                if (codis.includes(codi)) {
+                    const jsonObject = {
+                        Codi: codi,
+                        URL: url,
+                        Societat: societat,
+                        Inscripcio: inscripcio,
+                    };
+                    jsonArray.push(jsonObject);
+                }
+            }
+
+            return jsonArray;
+
+        } catch (error) {
+            console.error('Hi ha hagut un error en processar el PDF:', error);
+            alert('Hi ha hagut un error en processar el PDF.');
+        }
+    }
 
 }
 
