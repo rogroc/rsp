@@ -17,7 +17,8 @@ body {
   display: flex;
   justify-content: center; /* Centrat horitzontal */
   height: 100vh; /* Garanteix que l'element ocupi l'altura completa de la pantalla */
-  margin: 0; /* Elimina els marges per defecte del cos */
+width: 100vw;  
+margin: 0; /* Elimina els marges per defecte del cos */
 }
 
 </style>
@@ -516,10 +517,6 @@ async function obtenirData() {
             // Espera que l'objecte JSON sigui creat
             const extreure = await coincidencies();
 
-            // Ara pots utilitzar jsonObject amb seguretat
-
-            // FER EL PROGRAMA AQUÍ!!!
-
             // Construir URLs dels BORMEs a consultar i afegir-les a un nou camp del JSON
 
             extreure.forEach((registre) => {
@@ -576,7 +573,7 @@ async function matriuConsulta() {
       XLSX.utils.book_append_sheet(wb, ws, "Dades");
 
       // Descarregar l'arxiu XLSX
-      XLSX.writeFile(wb, dataActual.replaceAll("/", "") + "_cerca_BORME.xlsx");
+      XLSX.writeFile(wb, dataEnFormatAAAAMMDD.replaceAll("/", "") + " BORME cerca.xlsx");
 
       alert("XLSX DESCARREGAT");
     } else {
@@ -667,7 +664,7 @@ setTimeout(function() {
                         Codi: codi,
                         URL: url,
                         Societat: societat,
-                        Inscripcio: inscripcio,
+                        Inscripció: inscripcio,
                     };
                     jsonArray.push(jsonObject);
                 }
