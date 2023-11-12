@@ -10,11 +10,15 @@
 <h3>Cercador d'entitats del RSP al BORME</h3>
 
 <div>
-  <label for="dataInput">Introdueix la data o prem intro per la data d'avui: </label>
+  <label for="dataInput">Introdueix la data o prem intro per la data d'avui:<br></label>
   <input type="text" id="dataInput" placeholder="" onkeydown="if (event.key === 'Enter') obtenirData()">
 
   <button onclick="obtenirData()">Cerca al BORME</button>
+
+  <img id="loadingImage" src="processant.gif" alt="Càrrega en curs" style="display: none;">
+  <p id="loadingText" style="display: none;">Processant...</p>
 </div>
+
 
 <script>
 
@@ -73,6 +77,8 @@ async function obtenirData() {
             return pdf_href;
 
         } else {
+        // Amagar la imatge d'animació de càrrega
+        document.getElementById('loadingImage').style.display = 'none';
             console.log("No s'ha trobat BORME de la data indicada");
         }
     }
@@ -172,6 +178,7 @@ async function obtenirData() {
             return jsonArray;
 
         } catch (error) {
+
             console.error("No s'ha trobat cap BORME d'aquesta data.", error);
             alert("No s'ha trobat cap BORME d'aquesta data.");
         }
@@ -515,54 +522,69 @@ async function obtenirData() {
         }
     }
 
-    async function matriuConsulta() {
-        try {
-            const dadesAmbURLs = await extraccio();
-            const resultatsGlobals = []; // Variable per emmagatzemar tots els resultats
+async function matriuConsulta() {
+    try {
+        // Mostrar la imatge d'animació de càrrega
+        document.getElementById('loadingImage').style.display = 'block';
 
-            for (const registre of dadesAmbURLs) {
-                const codiUnicMap = new Map(); // Mapa per emmagatzemar codis únics
-                if (!codiUnicMap.has(registre.URL)) {
-                    codiUnicMap.set(registre.URL, [registre.Codi]);
-                } else {
-                    codiUnicMap.get(registre.URL).push(registre.Codi);
-                }
+        const dadesAmbURLs = await extraccio();
+        const resultatsGlobals = []; // Variable per emmagatzemar tots els resultats
 
-                const url = registre.URL;
-                const codis = codiUnicMap.get(url);
-
-                try {
-                    const resultats = await extreureTextBorme(url, codis);
-                    if (resultats.length > 0) {
-                        // Imprimeix els resultats de cada PDF
-                        console.log('Resultats per a URL:', url);
-                        console.log(resultats);
-                        resultatsGlobals.push(...resultats); // Afegir els resultats a la variable global
-                    }
-                } catch (pdfError) {
-                    console.error(`Hi ha hagut un error en processar el PDF de la URL ${url}: ${pdfError}`);
-                }
-            }
-
-            if (resultatsGlobals && resultatsGlobals.length > 0) {
-                // Crear un full de càlcul amb tots els resultats
-                const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Dades");
-
-                // Descarregar l'arxiu XLSX
-                XLSX.writeFile(wb, 'dades.xlsx');
-
-                alert("XLSX DESCARREGAT");
-
+        for (const registre of dadesAmbURLs) {
+            const codiUnicMap = new Map(); // Mapa per emmagatzemar codis únics
+            if (!codiUnicMap.has(registre.URL)) {
+                codiUnicMap.set(registre.URL, [registre.Codi]);
             } else {
-                alert("No s'ha trobat cap entitat del RSP al BORME analitzat");
+                codiUnicMap.get(registre.URL).push(registre.Codi);
             }
 
-        } catch (error) {
-            console.error('Hi ha hagut un error:', error);
+            const url = registre.URL;
+            const codis = codiUnicMap.get(url);
+
+            try {
+                const resultats = await extreureTextBorme(url, codis);
+                if (resultats.length > 0) {
+                    // Imprimeix els resultats de cada PDF
+                    console.log('Resultats per a URL:', url);
+                    console.log(resultats);
+                    resultatsGlobals.push(...resultats); // Afegir els resultats a la variable global
+                }
+            } catch (pdfError) {
+                console.error(`Hi ha hagut un error en processar el PDF de la URL ${url}: ${pdfError}`);
+            }
+        // Amagar la imatge d'animació de càrrega
+        document.getElementById('loadingImage').style.display = 'none';
         }
+
+        if (resultatsGlobals && resultatsGlobals.length > 0) {
+
+            // Crear un full de càlcul amb tots els resultats
+            const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Dades");
+
+            // Descarregar l'arxiu XLSX
+            XLSX.writeFile(wb, 'dades.xlsx');
+
+        // Amagar la imatge d'animació de càrrega
+        document.getElementById('loadingImage').style.display = 'none';
+
+            alert("XLSX DESCARREGAT");
+
+        } else {
+
+            alert("No s'ha trobat cap entitat del RSP al BORME analitzat");
+        }
+
+    } catch (error) {
+
+        console.error('Hi ha hagut un error:', error);
+
     }
+        // Amagar la imatge d'animació de càrrega
+        document.getElementById('loadingImage').style.display = 'none';
+}
+
 
 
     // Crida la funció per extreure la matriu de consulta
