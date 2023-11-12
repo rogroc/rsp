@@ -573,10 +573,10 @@ async function matriuConsulta() {
       // Crear un full de càlcul amb tots els resultats
       const ws = XLSX.utils.json_to_sheet(resultatsGlobals);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, dataActual.replaceAll("/", "") + "_extracció_BORME");
+      XLSX.utils.book_append_sheet(wb, ws, "Dades");
 
       // Descarregar l'arxiu XLSX
-      XLSX.writeFile(wb, 'dades.xlsx');
+      XLSX.writeFile(wb, dataActual.replaceAll("/", "") + "_cerca_BORME.xlsx");
 
       alert("XLSX DESCARREGAT");
     } else {
