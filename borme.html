@@ -27,6 +27,8 @@ margin: 0; /* Elimina els marges per defecte del cos */
 
   <h2>Cercador d'entitats del RSP al BORME</h2><br>
 
+  <button onclick="obrirWeb()">Activa accés</button>
+
   <p>Introdueix la data o prem intro per la data d'avui:<br></p>
   <input type="text" id="dataInput" placeholder="" onkeydown="if (event.key === 'Enter') obtenirData()">
 
@@ -38,6 +40,11 @@ margin: 0; /* Elimina els marges per defecte del cos */
 
 
 <script>
+
+// Funció per obrir la web d'accés CORS
+function obrirWeb() {
+  window.open("https://cors-anywhere.herokuapp.com/");
+}
 
 // Obtenir la data actual
 const ara = new Date();
@@ -533,6 +540,7 @@ async function obtenirData() {
     }
 
 async function matriuConsulta() {
+
   try {
     // Mostrar la imatge d'animació de càrrega
     document.getElementById('loadingImage').style.display = 'block';
