@@ -66,7 +66,7 @@ async function obtenirData() {
 
     async function webScraping() {
 
-        const url = "https://www.boe.es/borme/dias/" + dataEnFormatAAAAMMDD + "/";
+        const url = "https://cors-anywhere.herokuapp.com/https://www.boe.es/borme/dias/" + dataEnFormatAAAAMMDD + "/";
 
         const response = await fetch(url); // Obteniu el contingut de la pàgina web
         const html = await response.text(); // Converteix la resposta a text
