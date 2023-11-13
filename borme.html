@@ -470,9 +470,9 @@ async function obtenirData() {
     }
 
     function processEntitat(entitat) {
-        return entitat.split(" ").map(paraula => {
+        return eliminarAccents(entitat.split(" ").map(paraula => {
             return paraula.replace(/\([^)]*\)|\bSA?\b|\bSL?\b|\bAIE?\b|\bSAU?\b|\bSAL?\b/g, '').trim();
-        }).join(" ");
+        }).join(" "));
     }
 
     function eliminarPuntuacio(text) {
@@ -483,6 +483,10 @@ async function obtenirData() {
     // BUSCAR SOCIETATS DEL RSP A L'ÍNDEX DEL BORME
 
     // RETORNA LES COINCIDÈNCIES ENTRE LLISTA SOCIETATS RSP I L'ÍNDEX DEL BORME
+
+function eliminarAccents(text) {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 
     async function coincidencies() {
         try {
@@ -498,8 +502,8 @@ async function obtenirData() {
             function mostrarRegistresCoincidents(entitats, indexBORME) {
                 // Filtra els registres de "indexBORME" que coincideixen amb les entitats
                 const registresCoincidents = indexBORME.filter(registre => {
-                    const nomSocietat = registre.Societat.replace(/\([^)]*\)|\bSA?\b|\bSL?\b|\bAIE?\b|\bSAU?\b|\bSAL?\b/g, '').trim().toLowerCase().replace(/\s|\./g, '').replace(" ", "").replace("'", "").replace(".", "").replace(",", "").replace("d'", "").replace("l'", "");
-                    return entitats.some(entitat => nomSocietat.startsWith(entitat.toLowerCase().replace(/\s/g, '').replace(" ", "").replace("'", "").replace(".", "").replace(",", "").replace("d'", "").replace("l'", "")));
+                    const nomSocietat = registre.Societat.replace(/\([^)]*\)|\bSA?\b|\bSL?\b|\bAIE?\b|\bSAU?\b|\bSAL?\b/g, '').trim().toLowerCase().replace(/\s|\./g, '').replace("'", "").replace("d'", "").replace("l'", "");
+                    return entitats.some(entitat => nomSocietat.startsWith(eliminarAccents(eliminarPuntuacio(entitat.toLowerCase().replace(/\s/g, '').replace("'", "").replace("d'", "").replace("l'", "")))));
                 });
 
                 return registresCoincidents;
