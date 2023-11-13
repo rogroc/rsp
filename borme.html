@@ -587,7 +587,10 @@ async function matriuConsulta() {
       // Descarregar l'arxiu XLSX
       XLSX.writeFile(wb, dataEnFormatAAAAMMDD.replaceAll("/", "") + " BORME cerca.xlsx");
 
-      alert("XLSX DESCARREGAT");
+setTimeout(function() {
+  alert("XLSX DESCARREGAT");
+}, 100); 
+	    
     } else {
 
       document.getElementById('loadingImage').style.display = 'none';
