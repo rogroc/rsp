@@ -498,8 +498,8 @@ async function obtenirData() {
             function mostrarRegistresCoincidents(entitats, indexBORME) {
                 // Filtra els registres de "indexBORME" que coincideixen amb les entitats
                 const registresCoincidents = indexBORME.filter(registre => {
-                    const nomSocietat = registre.Societat.replace(/\([^)]*\)|\bSA?\b|\bSL?\b|\bAIE?\b|\bSAU?\b|\bSAL?\b/g, '').trim().toLowerCase().replace(/\s|\./g, '');
-                    return entitats.some(entitat => nomSocietat.startsWith(entitat.toLowerCase().replace(/\s/g, '')));
+                    const nomSocietat = registre.Societat.replace(/\([^)]*\)|\bSA?\b|\bSL?\b|\bAIE?\b|\bSAU?\b|\bSAL?\b/g, '').trim().toLowerCase().replace(/\s|\./g, '').replace(" ", "").replace("'", "").replace(".", "").replace(",", "").replace("d'", "").replace("l'", "");
+                    return entitats.some(entitat => nomSocietat.startsWith(entitat.toLowerCase().replace(/\s/g, '').replace(" ", "").replace("'", "").replace(".", "").replace(",", "").replace("d'", "").replace("l'", "")));
                 });
 
                 return registresCoincidents;
