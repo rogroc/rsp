@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Llegir HTML i Emmagatzemar Dades en JSON</title>
+    <!-- Inclou les llibreries jQuery i DataTables -->
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<input type="file" id="fileInput" onchange="handleFile()">
+
+<script>
+    function handleFile() {
+        const fileInput = document.getElementById('fileInput');
+
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+                const htmlContent = event.target.result;
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+
+                let tableData = {};
+
+                const trElements = doc.querySelectorAll('tr[name="tblDadesOrgans"]');
+                trElements.forEach((tr, rowIndex) => {
+                    const trId = tr.id;
+                    const rowData = {};
+
+                    const tdElements = tr.querySelectorAll('td');
+                    for (let colIndex = 0; colIndex < tdElements.length; colIndex += 2) {
+                        const label = tdElements[colIndex].textContent.trim();
+                        const value = tdElements[colIndex + 1].textContent.trim();
+
+                        if (label !== '') {
+                            rowData[label] = value;
+                        }
+                    }
+
+                    if (Object.keys(rowData).length > 0) {
+                        tableData[`row${rowIndex + 1}`] = rowData;
+                    }
+                });
+
+                const jsonData = JSON.stringify(tableData, null, 2);
+                console.log(jsonData);
+
+                // Guarda les dades en un fitxer JSON
+                const blob = new Blob([jsonData], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'dades.json';
+                a.click();
+            };
+
+            reader.readAsText(file);
+        } else {
+            console.error("Si us plau, selecciona un fitxer.");
+        }
+    }
+</script>
+
+</body>
+</html>
