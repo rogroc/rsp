@@ -3,13 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Llegir HTML i Emmagatzemar Dades en JSON</title>
+    <title>Fundacions: càrrecs vigents (PICA)</title>
     <!-- Inclou les llibreries jQuery i DataTables -->
     <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+
+    <!-- Afegim les llibreries necessàries per als botons d'exportació -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 </head>
 <body>
 
 <input type="file" id="fileInput" onchange="handleFile()">
+<table id="dataTable" class="display"></table>
 
 <script>
     function handleFile() {
@@ -24,7 +32,9 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlContent, 'text/html');
 
-                let tableData = {};
+                let tableData = [];
+                let headersCount = {}; // Contador per a cada capçalera
+                let allHeaders = new Set(); // Conjunt de totes les capçaleres
 
                 const trElements = doc.querySelectorAll('tr[name="tblDadesOrgans"]');
                 trElements.forEach((tr, rowIndex) => {
@@ -38,23 +48,46 @@
 
                         if (label !== '') {
                             rowData[label] = value;
+
+                            // Incrementem el comptador per aquesta capçalera
+                            headersCount[label] = (headersCount[label] || 0) + 1;
+
+                            // Afegim la capçalera al conjunt si apareix en almenys un registre fins ara
+                            if (headersCount[label] > 0 && !rowData["Data baixa:"]) {
+                                allHeaders.add(label);
+                            }
                         }
                     }
 
-                    if (Object.keys(rowData).length > 0) {
-                        tableData[`row${rowIndex + 1}`] = rowData;
+                    if (Object.keys(rowData).length > 0 && !rowData["Data baixa:"]) {
+                        tableData.push(rowData);
                     }
                 });
 
-                const jsonData = JSON.stringify(tableData, null, 2);
-                console.log(jsonData);
+                // Imprimeix el contingut del JSON a la consola
+                console.log(tableData);
 
-                // Guarda les dades en un fitxer JSON
-                const blob = new Blob([jsonData], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'dades.json';
-                a.click();
+                // Configuració de DataTables amb botons d'exportació (sense el botó CSV i sense alertes)
+ // Configuració de DataTables amb botons d'exportació (sense el botó CSV i sense alertes)
+$(document).ready(function() {
+    $.fn.dataTable.ext.errMode = 'none'; // Desactiva les alertes globalment
+    $('#dataTable').DataTable({
+        data: tableData,
+        columns: Array.from(allHeaders).map(key => ({ title: key.replace(':', ''), data: key })),
+        buttons: [
+            {
+                extend: 'excel',
+                text: 'Excel',
+            }
+        ],
+        dom: 'Bfrtip',
+        lengthMenu: [
+            [ -1 ], // Mostra tot
+            ['Mostra tot']
+        ],
+    });
+});
+
             };
 
             reader.readAsText(file);
