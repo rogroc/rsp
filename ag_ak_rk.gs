@@ -79,7 +79,16 @@ function enviarCorreu(dataDescarrega, dadesNoves, url) {
   cosMissatge += "Dades Noves:\n\n";
   for (var i = 0; i < dadesNoves.length; i++) {
     cosMissatge += "Data de Sessió: " + dadesNoves[i][5].replace("T00:00:00.000", "") + "\n"; // Index 5 correspon al camp "datasessio"
-    cosMissatge += dadesNoves[i].slice(1).join(", ") + "\n";
+    cosMissatge += dadesNoves[i].slice(1).map(element => {
+    // Verifica si l'element és un objecte
+    if (typeof element === 'object' && element !== null) {
+        // Converteix l'objecte a cadena de text
+        return JSON.stringify(element);
+    } else {
+        return element;
+    }
+}).join(", ") + "\n";
+
     cosMissatge += "\n"; // Afegir una línia en blanc entre registres
   }
 
