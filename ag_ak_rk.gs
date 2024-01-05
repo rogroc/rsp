@@ -73,7 +73,6 @@ function enviarCorreu(dataDescarrega, dadesNoves, url) {
   var destinataris = ["rogerrocavert@gencat.cat", "msalvatella@gencat.cat", "luisconesa@gencat.cat"];
   var assumpte = "Nou/s acord/s de govern (augments o reduccions de capital)";
   var cosMissatge = "Nou/s acord/s de govern amb referència a augments o reducions de capital\n\n";
-  cosMissatge += "S'han afegit nous registres des de la següent URL:\n" + urlbase2 + cosurl + "\n\n";
 
   // Afegir les dades noves al cos del missatge
   cosMissatge += "Dades Noves:\n\n";
@@ -91,6 +90,8 @@ function enviarCorreu(dataDescarrega, dadesNoves, url) {
 
     cosMissatge += "\n"; // Afegir una línia en blanc entre registres
   }
+  
+cosMissatge += "S'han afegit nous registres des de la següent URL:\n" + urlbase2 + cosurl + "\n\n";
 
   // Enviar el correu electrònic a cada destinatario
   for (var j = 0; j < destinataris.length; j++) {
