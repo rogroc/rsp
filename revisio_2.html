@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ca">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de revisió d'entitats</title>
+    <!-- Incloure la biblioteca D3.js -->
+    <!-- <script src="https://d3js.org/d3.v7.min.js"></script> -->
+</head>
+
+<body>
+
+    <div id="taula-container"></div>
+
+    <script>
+        // URL de les dades JSON
+        const url1 = "https://analisi.transparenciacatalunya.cat/resource/sexe-cpsh.json?$limit=300000";  // MEMBRES
+        const url2 = "https://analisi.transparenciacatalunya.cat/resource/gr39-ik6u.json?$limit=300000";  // DADES GENÈRIQUES
+
+        // Funció per carregar les dades JSON
+        async function carregarDades() {
+            try {
+                // Sol·licitar les dades mitjançant fetch
+                const resposta1 = await fetch(url1);
+                const resposta2 = await fetch(url2);
+
+                // Comprovar si les respostes són vàlides
+                if (!resposta1.ok || !resposta2.ok) {
+                    throw new Error("No es poden carregar les dades.");
+                }
+
+                // Convertir les respostes en objectes JSON
+                const dades1 = await resposta1.json();
+                const dades2 = await resposta2.json();
+
+                // Filtrar i combinar les dades dels dos conjunts
+                const resultat2 = dades2.map(({ denominaci, rgan_de_govern, nombre_m_nim_de_membres, nombre_m_xim_de_membres: nombre_m_xim_de_membres, total_membres_rgan }) => ({
+                    denominaci,
+                    rgan_de_govern: rgan_de_govern !== undefined ? "Conté dades" : "Buit",
+                    nombre_m_nim_de_membres: nombre_m_nim_de_membres !== undefined ? "Conté dades" : "Buit",
+                    nombre_m_xim_de_membres: nombre_m_xim_de_membres !== undefined ? "Conté dades" : "Buit",
+                    total_membres_rgan: total_membres_rgan !== undefined ? "Conté dades" : "Buit"
+                }));
+
+                // Filtrar i combinar les dades dels dos conjunts
+                const resultat1 = dades1.map(({ denominaci, n_mero_de_registre, denominaci_membre, membre_part_cip, part_cip_o_organisme, departament, dret_de_vot, categoritzaci_part_cip, nombre_de_membres }) => ({
+                    denominaci,
+                    n_mero_de_registre,
+                    membres: (denominaci_membre !== undefined || membre_part_cip !== undefined || part_cip_o_organisme !== undefined || departament !== undefined || dret_de_vot !== undefined || categoritzaci_part_cip !== undefined || nombre_de_membres !== undefined) ? "Conté dades" : "Buit"
+                }));
+
+                // Filtrar i combinar les dades dels dos conjunts
+                var resultatUnificat = resultat2.map(item2 => {
+                    const trobat = resultat1.find(item1 => item1.denominaci === item2.denominaci);
+                    const denominaciModificada = item2.denominaci;
+                    const registre = trobat ? trobat.n_mero_de_registre : ""; // Obtenir el valor de registre de resultat1 si existeix
+                    const { n_mero_de_registre, ...restant1 } = trobat || {}; // Excloure n_mero_de_registre si existeix
+                    const { ...restant2 } = item2;
+                    return {
+                        ...restant2,
+                        ...restant1,
+                        denominaci: registre + " - " + denominaciModificada,
+                    };
+                }).filter(item => item !== null); // Filtrar els elements nuls generats per no complir el filtre
+
+                // Imprimir els resultats en una taula
+                const table = document.createElement('table');
+                table.border = '1';
+
+                // Capçalera de la taula amb capçaleres personalitzades
+                const headers = ['Denominació', 'Òrgan de Govern', 'Nombre Mínim de Membres', 'Nombre Màxim de Membres', 'Total de Membres a l\'Òrgan', 'Membres'];
+                const headerRow = table.insertRow(0);
+                headers.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    headerRow.appendChild(th);
+                });
+
+                // Dades de la taula
+                resultatUnificat.forEach(data => {
+                    const row = table.insertRow();
+                    Object.values(data).forEach(value => {
+                        const cell = row.insertCell();
+                        cell.textContent = value;
+                    });
+                });
+
+                // Afegir la taula a la div amb l'identificador "taula-container"
+                document.getElementById('taula-container').appendChild(table);
+
+            } catch (error) {
+                console.error("Error en carregar les dades:", error);
+            }
+        }
+
+        // Cridar la funció per carregar les dades
+        carregarDades();
+    </script>
+</body>
+
+</html>
