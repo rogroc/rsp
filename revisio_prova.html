@@ -35,7 +35,7 @@
                 const dades2 = await resposta2.json();
 
                 // Filtrar i combinar les dades dels dos conjunts
-                const resultat2 = dades2.map(({ denominaci, rgan_de_govern, nombre_m_nim_de_membres, nombre_m_xim_de_membres: nombre_m_xim_de_membres, total_membres_rgan }) => ({
+                const resultat2 = dades2.map(({ denominaci, rgan_de_govern, nombre_m_nim_de_membres, nombre_m_xim_de_membres, total_membres_rgan }) => ({
                     denominaci,
                     rgan_de_govern: rgan_de_govern !== undefined ? "Conté dades" : "Buit",
                     nombre_m_nim_de_membres: nombre_m_nim_de_membres !== undefined ? "Conté dades" : "Buit",
@@ -70,7 +70,7 @@
 
                 // Capçalera de la taula amb capçaleres personalitzades
                 const headers = ['Denominació', 'Òrgan de Govern', 'Nombre Mínim de Membres', 'Nombre Màxim de Membres', 'Total de Membres a l\'Òrgan', 'Membres'];
-                const headerRow = table.insertRow(0);
+                const headerRow = table.createTHead().insertRow(0);
                 headers.forEach(headerText => {
                     const th = document.createElement('th');
                     th.textContent = headerText;
@@ -78,8 +78,9 @@
                 });
 
                 // Dades de la taula
+                const tbody = table.createTBody();
                 resultatUnificat.forEach(data => {
-                    const row = table.insertRow();
+                    const row = tbody.insertRow();
                     Object.values(data).forEach(value => {
                         const cell = row.insertCell();
                         cell.textContent = value;
