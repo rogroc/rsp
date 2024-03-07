@@ -77,13 +77,38 @@ var resultatUnificat = resultat2.map(item2 => {
                 const table = document.createElement('table');
                 table.border = '1';
 
-                // Capçalera de la taula
-                const headerRow = table.insertRow(0);
-                Object.keys(resultatUnificat[0]).forEach(key => {
-                    const th = document.createElement('th');
-                    th.textContent = key;
-                    headerRow.appendChild(th);
-                });
+ // Capçalera de la taula
+const headerRow = table.insertRow(0);
+const headers = Object.keys(resultatUnificat[0]).map(key => {
+    let th = document.createElement('th');
+    switch (key) {
+        case 'denominaci':
+            th.textContent = 'Denominació';
+            break;
+        case 'rgan_de_govern':
+            th.textContent = 'Òrgan de Govern';
+            break;
+        case 'nombre_m_nim_de_membres':
+            th.textContent = 'Nombre Mínim de Membres';
+            break;
+        case 'nombre_m_xim_de_membres':
+            th.textContent = 'Nombre Màxim de Membres';
+            break;
+        case 'total_membres_rgan':
+            th.textContent = 'Total de Membres a l\'Òrgan';
+            break;
+        case 'membres':
+            th.textContent = 'Membres';
+            break;
+        // Afegir altres casos si cal
+        default:
+            th.textContent = key;
+    }
+    return th;
+});
+
+headers.forEach(th => headerRow.appendChild(th));
+
 
                 // Dades de la taula
                 resultatUnificat.forEach(data => {
