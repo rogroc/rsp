@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taula Editable</title>
+  <style>
+    .editable {
+      background-color: #f8d7da;
+    }
+    .verified {
+      background-color: white;
+    }
+    input[type="text"] {
+      width: 75%;
+      display: inline-block;
+    }
+    .checkbox-container {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+    .red-text {
+      color: red;
+    }
+    .toggle-btn {
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+    td {
+      min-width: 150px;
+    }
+    .history-popup, .full-history-popup {
+      position: absolute;
+      top: 20%;
+      left: 20%;
+      width: 400px;
+      max-height: 60%;
+      overflow-y: auto;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      z-index: 9999;
+    }
+    .history-item {
+      margin-bottom: 5px;
+    }
+    .file-link {
+      color: blue;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .file-input {
+      margin-top: 5px;
+      display: block;
+    }
+    .hidden-column {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Taula de Dades Editable</h2>
+
+<!-- Botó per mostrar l'historial complet de canvis -->
+<button id="showFullHistoryBtn" class="toggle-btn hidden">Mostrar Historial Complet</button>
+
+<!-- Botó per associar documentació als canvis seleccionats -->
+<button id="associateDocsBtn" class="toggle-btn hidden">Associar documentació als canvis seleccionats</button>
+
+<table border="1" id="dataTable">
+  <thead>
+    <tr>
+      <th>Nom</th>
+      <th class="editable-column hidden-column">Editar Nom</th>
+      <th>Edat</th>
+      <th class="editable-column hidden-column">Editar Edat</th>
+      <th>Correu Electrònic</th>
+      <th class="editable-column hidden-column">Editar Correu Electrònic</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Joan</td>
+      <td class="editable hidden"><input type="text"><div class="checkbox-container"><input type="checkbox" class="verifyCheckbox" disabled></div></td>
+      <td>25</td>
+      <td class="editable hidden"><input type="text"><div class="checkbox-container"><input type="checkbox" class="verifyCheckbox" disabled></div></td>
+      <td>joan@example.com</td>
+      <td class="editable hidden"><input type="text"><div class="checkbox-container"><input type="checkbox" class="verifyCheckbox" disabled></div></td>
+    </tr>
+    <tr>
+      <td>Maria</td>
+      <td class="editable hidden"><input type="text"><div class="checkbox-container"><input type="checkbox" class="verifyCheckbox" disabled></div></td>
+      <td>30</td>
+      <td class="editable hidden"><input type="text"><div class="checkbox-container"><input type="checkbox" class="verifyCheckbox" disabled></div></td>
+      <td>maria@example.com</td>
+      <td class="editable hidden"><input type="text"><div class="checkbox-container"><input type="checkbox" class="verifyCheckbox" disabled></div></td>
+    </tr>
+  </tbody>
+</table>
+
+<button id="toggleAllBtn" class="toggle-btn">Veure Modificacions</button>
+<!-- El botó "Validar Canvis" també es mostrarà només quan hi hagi línies editables -->
+<button id="validateBtn" class="toggle-btn hidden">Validar Canvis</button>
+
+<!-- Finestra emergent per mostrar els documents associats (tant per canvis pendents com validats) -->
+<div id="historyPopup" class="history-popup hidden">
+  <h3>Documents Associats</h3>
+  <ul id="historyList"></ul>
+</div>
+
+<!-- Finestra emergent per mostrar l'historial complet de canvis validats -->
+<div id="fullHistoryPopup" class="full-history-popup hidden">
+  <h3>Historial Complet de Canvis</h3>
+  <ul id="fullHistoryList"></ul>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  let history = {};
+  let pendingDocuments = {};
+  let selectedChanges = [];
+
+  // Funció per afegir documentació a un camp concret
+  function addDocument(cellId, historyIndex) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.pdf, .jpg, .png';
+    fileInput.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const fileUrl = e.target.result;
+          const fileObj = { url: fileUrl, name: file.name };
+          
+          if (typeof historyIndex !== 'undefined' && history[cellId]) {
+            // Afegim el document al canvi específic de l'historial
+            if (!history[cellId][historyIndex].documents) {
+              history[cellId][historyIndex].documents = [];
+            }
+            history[cellId][historyIndex].documents.push(fileObj);
+          } else {
+            // Afegim el document als canvis pendents
+            if (!pendingDocuments[cellId]) {
+              pendingDocuments[cellId] = [];
+            }
+            pendingDocuments[cellId].push(fileObj);
+          }
+          
+          alert('Document afegit correctament!');
+          
+          // Actualitzem la visualització
+          showHistory({
+            preventDefault: () => {},
+            currentTarget: document.querySelector(`td[data-cell-id="${cellId}"]`) || 
+                         document.querySelector(`td:nth-child(${parseInt(cellId.split('-')[1])}`)
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    fileInput.click();
+  }
+
+  function validateChanges() {
+    const rows = document.querySelectorAll('#dataTable tbody tr');
+    rows.forEach((row, rowIndex) => {
+      const cells = row.querySelectorAll('td');
+      cells.forEach((cell, colIndex) => {
+        if (cell.classList.contains('editable')) {
+          const input = cell.querySelector('input[type="text"]');
+          const checkbox = cell.querySelector('input[type="checkbox"]');
+          const originalCell = row.cells[colIndex - 1];
+          if (input && checkbox.checked && input.value.trim() !== "") {
+            const oldValue = originalCell.innerText;
+            originalCell.innerText = input.value;
+            originalCell.classList.add('verified');
+            const cellId = `${rowIndex}-${colIndex}`;
+            if (!history[cellId]) {
+              history[cellId] = [];
+            }
+            history[cellId].push({
+              change: `${oldValue} → ${originalCell.innerText}`,
+              date: new Date().toLocaleString(),
+              documents: pendingDocuments[cellId] ? [...pendingDocuments[cellId]] : []
+            });
+            pendingDocuments[cellId] = [];
+            input.value = '';
+            checkbox.checked = false;
+            checkbox.disabled = true;
+          }
+        }
+      });
+    });
+    updateButtonsVisibility();
+  }
+
+  function showHistory(event) {
+    event.preventDefault();
+    const cell = event.currentTarget;
+    const isEditable = cell.classList.contains('editable');
+    let rowIndex, colIndex;
+    if (isEditable) {
+      rowIndex = cell.parentElement.rowIndex - 1;
+      colIndex = cell.cellIndex;
+    } else {
+      rowIndex = cell.parentElement.rowIndex - 1;
+      colIndex = cell.cellIndex + 1;
+    }
+    const cellId = `${rowIndex}-${colIndex}`;
+    const historyList = document.getElementById('historyList');
+    historyList.innerHTML = '';
+
+    if (isEditable) {
+      const docs = pendingDocuments[cellId] || [];
+      if (docs.length > 0) {
+        docs.forEach((doc) => {
+          const li = document.createElement('li');
+          const docLink = document.createElement('a');
+          docLink.href = doc.url;
+          docLink.textContent = doc.name;
+          docLink.classList.add('file-link');
+          docLink.target = '_blank';
+          li.appendChild(docLink);
+          historyList.appendChild(li);
+        });
+      } else {
+        historyList.innerHTML = '<li>No hi ha documents associats.</li>';
+      }
+      const addBtn = document.createElement('button');
+      addBtn.textContent = 'Afegir Documentació';
+      addBtn.classList.add('file-input');
+      addBtn.addEventListener('click', function() {
+        addDocument(cellId);
+      });
+      historyList.appendChild(addBtn);
+    } else {
+      if (history[cellId]) {
+        history[cellId].slice().reverse().forEach((entry, index) => {
+          const li = document.createElement('li');
+          li.classList.add('history-item');
+          li.textContent = `${entry.date}: ${entry.change}`;
+          if (entry.documents && entry.documents.length > 0) {
+            const docsList = document.createElement('ul');
+            entry.documents.forEach((doc) => {
+              const docLi = document.createElement('li');
+              const docLink = document.createElement('a');
+              docLink.href = doc.url;
+              docLink.textContent = doc.name;
+              docLink.classList.add('file-link');
+              docLink.target = '_blank';
+              docLi.appendChild(docLink);
+              docsList.appendChild(docLi);
+            });
+            li.appendChild(docsList);
+          }
+          const docBtn = document.createElement('button');
+          docBtn.textContent = 'Afegir Documentació';
+          docBtn.classList.add('file-input');
+          docBtn.addEventListener('click', function() {
+            addDocument(cellId, history[cellId].length - 1 - index);
+          });
+          li.appendChild(docBtn);
+          historyList.appendChild(li);
+        });
+      } else {
+        historyList.innerHTML = '<li>No hi ha canvis per aquest camp.</li>';
+      }
+    }
+    document.getElementById('historyPopup').classList.remove('hidden');
+  }
+
+  function showFullHistory() {
+    const fullHistoryList = document.getElementById('fullHistoryList');
+    fullHistoryList.innerHTML = '';
+    for (const cellId in history) {
+      if (history.hasOwnProperty(cellId)) {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>Camp ${cellId}:</strong>`;
+        const ul = document.createElement('ul');
+        history[cellId].slice().reverse().forEach((entry, index) => {
+          const subLi = document.createElement('li');
+          subLi.textContent = `${entry.date}: ${entry.change}`;
+          if (entry.documents && entry.documents.length > 0) {
+            const docsList = document.createElement('ul');
+            entry.documents.forEach((doc) => {
+              const docLi = document.createElement('li');
+              const docLink = document.createElement('a');
+              docLink.href = doc.url;
+              docLink.textContent = doc.name;
+              docLink.classList.add('file-link');
+              docLink.target = '_blank';
+              docLi.appendChild(docLink);
+              docsList.appendChild(docLi);
+            });
+            subLi.appendChild(docsList);
+          }
+          const docBtn = document.createElement('button');
+          docBtn.textContent = 'Afegir Documentació';
+          docBtn.classList.add('file-input');
+          docBtn.addEventListener('click', function() {
+            addDocument(cellId, history[cellId].length - 1 - index);
+          });
+          subLi.appendChild(docBtn);
+          ul.appendChild(subLi);
+        });
+        li.appendChild(ul);
+        fullHistoryList.appendChild(li);
+      }
+    }
+    if (fullHistoryList.innerHTML === '') {
+      fullHistoryList.innerHTML = '<li>No hi ha canvis registrats.</li>';
+    }
+    document.getElementById('fullHistoryPopup').classList.remove('hidden');
+  }
+
+  function updateButtonsVisibility() {
+    const editableRows = document.querySelectorAll('.editable');
+    const hasVisibleEditableRows = Array.from(editableRows).some(row => !row.classList.contains('hidden'));
+    document.getElementById('associateDocsBtn').classList.toggle('hidden', !hasVisibleEditableRows);
+    document.getElementById('validateBtn').classList.toggle('hidden', !hasVisibleEditableRows);
+    document.getElementById('showFullHistoryBtn').classList.toggle('hidden', !hasVisibleEditableRows);
+  }
+
+  // Event Listeners
+  document.getElementById('validateBtn').addEventListener('click', validateChanges);
+  
+  document.getElementById('toggleAllBtn').addEventListener('click', function() {
+    const editableCells = document.querySelectorAll('.editable');
+    const editableColumns = document.querySelectorAll('.editable-column');
+    const allCellsVisible = editableCells[0].classList.contains('hidden');
+    editableCells.forEach(cell => {
+      cell.classList.toggle('hidden', !allCellsVisible);
+    });
+    editableColumns.forEach(column => {
+      column.classList.toggle('hidden-column', !allCellsVisible);
+    });
+    this.textContent = allCellsVisible ? 'Ocultar Modificacions' : 'Veure Modificacions';
+    updateButtonsVisibility();
+  });
+
+  document.getElementById('associateDocsBtn').addEventListener('click', function() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.pdf, .jpg, .png';
+    fileInput.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const fileUrl = e.target.result;
+          const fileObj = { url: fileUrl, name: file.name };
+          selectedChanges.forEach(cellId => {
+            if (!pendingDocuments[cellId]) {
+              pendingDocuments[cellId] = [];
+            }
+            pendingDocuments[cellId].push(fileObj);
+          });
+          alert('Document afegit correctament als canvis seleccionats!');
+          selectedChanges = [];
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    fileInput.click();
+  });
+
+  document.getElementById('showFullHistoryBtn').addEventListener('click', showFullHistory);
+
+  document.querySelectorAll('td').forEach(cell => {
+    cell.addEventListener('contextmenu', showHistory);
+  });
+
+  document.getElementById('historyPopup').addEventListener('click', function() {
+    this.classList.add('hidden');
+  });
+
+  document.getElementById('fullHistoryPopup').addEventListener('click', function() {
+    this.classList.add('hidden');
+  });
+
+  updateButtonsVisibility();
+
+  // Esdeveniment per habilitar la casella de selecció quan hi ha una entrada
+  document.querySelectorAll('.editable input[type="text"]').forEach(input => {
+    input.addEventListener('input', function() {
+      const checkbox = this.parentElement.querySelector('.verifyCheckbox');
+      checkbox.disabled = this.value.trim() === '';
+      if (checkbox.disabled) {
+        checkbox.checked = false;
+      }
+    });
+  });
+
+  // Esdeveniment per gestionar la selecció de canvis
+  document.querySelectorAll('.verifyCheckbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const cell = this.parentElement.parentElement;
+      const rowIndex = cell.parentElement.rowIndex - 1;
+      const colIndex = cell.cellIndex;
+      const cellId = `${rowIndex}-${colIndex}`;
+      if (this.checked) {
+        selectedChanges.push(cellId);
+      } else {
+        selectedChanges = selectedChanges.filter(id => id !== cellId);
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>
