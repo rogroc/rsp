@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Taula Jeràrquica Editable</title>
+  <style>
+    /* Estils per als camps editables i validats */
+    .editable {
+      background-color: #f8d7da;
+    }
+    .verified {
+      background-color: white;
+    }
+    input[type="text"] {
+      width: 75%;
+      display: inline-block;
+    }
+    .checkbox-container {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+    .red-text {
+      color: red;
+    }
+    .toggle-btn {
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+    td {
+      min-width: 150px;
+      position: relative; /* Per posicionar les finestres emergents */
+    }
+    .history-popup, .full-history-popup {
+      position: absolute;
+      top: 20%;
+      left: 20%;
+      width: 400px;
+      max-height: 60%;
+      overflow-y: auto;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      z-index: 9999;
+    }
+    .history-item {
+      margin-bottom: 5px;
+    }
+    .file-link {
+      color: blue;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .file-input {
+      margin-top: 5px;
+      display: block;
+    }
+    .hidden-column {
+      display: none;
+    }
+    .display-content {
+      /* Contingut original a mostrar */
+    }
+    /* Fila de filtres: afegim una fila extra a la capçalera */
+    .filterRow input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Taula Jeràrquica Editable</h2>
+
+  <!-- Botons per controlar edició, validació, associació de documentació i historial -->
+  <button id="toggleAllBtn" class="toggle-btn">Veure Modificacions</button>
+  <button id="validateBtn" class="toggle-btn hidden">Validar Canvis</button>
+  <button id="associateDocsBtn" class="toggle-btn hidden">Associar documentació als canvis seleccionats</button>
+  <button id="showFullHistoryBtn" class="toggle-btn hidden">Mostrar Historial Complet</button>
+
+  <!-- Taula jeràrquica amb capçalera i fila de filtres -->
+  <table border="1" id="hierarchicalTable">
+    <thead>
+      <tr id="headerRow">
+        <th>Codi entitat</th>
+        <th>Entitats partícips</th>
+        <th>Càrrecs</th>
+        <th>Persones (Nom + Cognoms)</th>
+      </tr>
+      <tr class="filterRow">
+        <th><input type="text" placeholder="Filtra Codi entitat"></th>
+        <th><input type="text" placeholder="Filtra Entitats partícips"></th>
+        <th><input type="text" placeholder="Filtra Càrrecs"></th>
+        <th><input type="text" placeholder="Filtra Persones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- El cos de la taula es generarà dinàmicament -->
+      <!-- Exemple d'estructura (la mateixa que s'utilitza amb flatData) -->
+      <tr>
+        <td rowspan="4" data-cell-id="cell-E001" class="data-cell">
+          <span class="display-content">E001</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+        <td rowspan="3" data-cell-id="cell-E001-Partícip A" class="data-cell">
+          <span class="display-content">Partícip A</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+        <td rowspan="2" data-cell-id="cell-E001-Partícip A-President" class="data-cell">
+          <span class="display-content">President</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+        <td data-cell-id="cell-E001-Partícip A-President-Joan Garcia" class="data-cell">
+          <span class="display-content">Joan Garcia</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td data-cell-id="cell-E001-Partícip A-President-Anna Ruiz" class="data-cell">
+          <span class="display-content">Anna Ruiz</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td data-cell-id="cell-E001-Partícip A-Secretari" class="data-cell">
+          <span class="display-content">Secretari</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+        <td data-cell-id="cell-E001-Partícip A-Secretari-Marta Puig" class="data-cell">
+          <span class="display-content">Marta Puig</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td data-cell-id="cell-E001-Partícip B" class="data-cell">
+          <span class="display-content">Partícip B</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+        <td data-cell-id="cell-E001-Partícip B-Director" class="data-cell">
+          <span class="display-content">Director</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+        <td data-cell-id="cell-E001-Partícip B-Director-Pere Soler" class="data-cell">
+          <span class="display-content">Pere Soler</span>
+          <div class="editable">
+            <input type="text" value="">
+            <div class="checkbox-container">
+              <input type="checkbox" class="verifyCheckbox" disabled>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <!-- Popup per historial / documentació pendent -->
+  <div id="historyPopup" class="history-popup hidden">
+    <h3>Documents Associats / Pendent</h3>
+    <ul id="historyList"></ul>
+  </div>
+  <!-- Popup per historial complet -->
+  <div id="fullHistoryPopup" class="full-history-popup hidden">
+    <h3>Historial Complet de Canvis</h3>
+    <ul id="fullHistoryList"></ul>
+  </div>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      /********** PART 1: DADES ORIGINALS I AGRUPACIÓ **********/
+      let flatDataOriginal = [
+        { codi: "E001", part: "Partícip A", carrec: "President", persona: "Joan Garcia" },
+        { codi: "E001", part: "Partícip A", carrec: "President", persona: "Anna Ruiz" },
+        { codi: "E001", part: "Partícip A", carrec: "Secretari", persona: "Marta Puig" },
+        { codi: "E001", part: "Partícip B", carrec: "Director", persona: "Pere Soler" }
+      ];
+      // Les dades actuals, que s'actualitzaran amb les modificacions
+      let flatDataCurrent = JSON.parse(JSON.stringify(flatDataOriginal));
+      
+      function aggregateData(data) {
+        let grouped = {};
+        data.forEach(item => {
+          if (!grouped[item.codi]) grouped[item.codi] = {};
+          if (!grouped[item.codi][item.part]) grouped[item.codi][item.part] = {};
+          if (!grouped[item.codi][item.part][item.carrec]) grouped[item.codi][item.part][item.carrec] = [];
+          grouped[item.codi][item.part][item.carrec].push(item.persona);
+        });
+        let result = [];
+        for (let codi in grouped) {
+          let partsArr = [];
+          for (let part in grouped[codi]) {
+            let carrecsArr = [];
+            for (let carrec in grouped[codi][part]) {
+              let personesArr = grouped[codi][part][carrec];
+              carrecsArr.push({ carrec: carrec, persones: personesArr });
+            }
+            let totalRowsPart = carrecsArr.reduce((acc, cur) => acc + cur.persones.length, 0);
+            partsArr.push({ part: part, carrecs: carrecsArr, totalRows: totalRowsPart });
+          }
+          let totalRowsCodi = partsArr.reduce((acc, cur) => acc + cur.totalRows, 0);
+          result.push({ codi: codi, parts: partsArr, totalRows: totalRowsCodi });
+        }
+        return result;
+      }
+      
+      function rebuildTable(aggregatedData) {
+        const tbody = document.querySelector("#hierarchicalTable tbody");
+        tbody.innerHTML = "";
+        aggregatedData.forEach(record => {
+          let firstCodiRow = true;
+          record.parts.forEach(partObj => {
+            let firstPartRow = true;
+            partObj.carrecs.forEach(carrecObj => {
+              let firstCarrecRow = true;
+              carrecObj.persones.forEach(persona => {
+                const tr = document.createElement("tr");
+                if (firstCodiRow) {
+                  const td = document.createElement("td");
+                  td.rowSpan = record.totalRows;
+                  td.classList.add("data-cell");
+                  td.setAttribute("data-cell-id", "cell-" + record.codi);
+                  td.innerHTML = `<span class="display-content">${record.codi}</span>
+                    <div class="editable">
+                      <input type="text" value="">
+                      <div class="checkbox-container">
+                        <input type="checkbox" class="verifyCheckbox" disabled>
+                      </div>
+                    </div>`;
+                  tr.appendChild(td);
+                  firstCodiRow = false;
+                }
+                if (firstPartRow) {
+                  const td = document.createElement("td");
+                  td.rowSpan = partObj.totalRows;
+                  td.classList.add("data-cell");
+                  td.setAttribute("data-cell-id", "cell-" + record.codi + "-" + partObj.part);
+                  td.innerHTML = `<span class="display-content">${partObj.part}</span>
+                    <div class="editable">
+                      <input type="text" value="">
+                      <div class="checkbox-container">
+                        <input type="checkbox" class="verifyCheckbox" disabled>
+                      </div>
+                    </div>`;
+                  tr.appendChild(td);
+                  firstPartRow = false;
+                }
+                if (firstCarrecRow) {
+                  const td = document.createElement("td");
+                  td.rowSpan = carrecObj.persones.length;
+                  td.classList.add("data-cell");
+                  td.setAttribute("data-cell-id", "cell-" + record.codi + "-" + partObj.part + "-" + carrecObj.carrec);
+                  td.innerHTML = `<span class="display-content">${carrecObj.carrec}</span>
+                    <div class="editable">
+                      <input type="text" value="">
+                      <div class="checkbox-container">
+                        <input type="checkbox" class="verifyCheckbox" disabled>
+                      </div>
+                    </div>`;
+                  tr.appendChild(td);
+                  firstCarrecRow = false;
+                }
+                const td = document.createElement("td");
+                td.classList.add("data-cell");
+                td.setAttribute("data-cell-id", "cell-" + record.codi + "-" + partObj.part + "-" + carrecObj.carrec + "-" + persona);
+                td.innerHTML = `<span class="display-content">${persona}</span>
+                  <div class="editable">
+                    <input type="text" value="">
+                    <div class="checkbox-container">
+                      <input type="checkbox" class="verifyCheckbox" disabled>
+                    </div>
+                  </div>`;
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+              });
+            });
+          });
+        });
+        attachTableEvents();
+      }
+      
+      function applyFilters() {
+        const filterInputs = document.querySelectorAll(".filterRow input");
+        const filters = Array.from(filterInputs).map(input => input.value.toLowerCase());
+        const filteredData = flatDataCurrent.filter(record => {
+          return record.codi.toLowerCase().includes(filters[0]) &&
+                 record.part.toLowerCase().includes(filters[1]) &&
+                 record.carrec.toLowerCase().includes(filters[2]) &&
+                 record.persona.toLowerCase().includes(filters[3]);
+        });
+        const aggregated = aggregateData(filteredData);
+        rebuildTable(aggregated);
+      }
+      
+      document.querySelectorAll(".filterRow input").forEach(input => {
+        input.addEventListener("keyup", applyFilters);
+        input.addEventListener("change", applyFilters);
+      });
+      
+      // Inicialment, construïm la taula amb flatDataCurrent.
+      flatDataCurrent = JSON.parse(JSON.stringify(flatDataOriginal));
+      const aggregatedInitial = aggregateData(flatDataCurrent);
+      rebuildTable(aggregatedInitial);
+      
+      /********** PART 2: FUNCIONALITAT D'EDICIÓ, VALIDACIÓ, HISTORIAL i ASSOCIACIÓ **********/
+      let history = {};
+      let pendingDocuments = {};
+      let selectedChanges = [];
+      
+      // Actualitza flatDataCurrent segons el canvi validat.
+      function updateFlatData(cellId, newValue, oldValue) {
+        let parts = cellId.substring(5).split("-");
+        if (parts.length === 1) {
+          flatDataCurrent.forEach(rec => {
+            if (rec.codi === oldValue) {
+              rec.codi = newValue;
+            }
+          });
+        } else if (parts.length === 2) {
+          flatDataCurrent.forEach(rec => {
+            if (rec.codi === parts[0] && rec.part === oldValue) {
+              rec.part = newValue;
+            }
+          });
+        } else if (parts.length === 3) {
+          flatDataCurrent.forEach(rec => {
+            if (rec.codi === parts[0] && rec.part === parts[1] && rec.carrec === oldValue) {
+              rec.carrec = newValue;
+            }
+          });
+        } else if (parts.length === 4) {
+          flatDataCurrent.forEach(rec => {
+            if (rec.codi === parts[0] && rec.part === parts[1] && rec.carrec === parts[2] && rec.persona === oldValue) {
+              rec.persona = newValue;
+            }
+          });
+        }
+      }
+      
+      function validateChanges() {
+        const cells = document.querySelectorAll('.data-cell');
+        cells.forEach(cell => {
+          const editableDiv = cell.querySelector('.editable');
+          if (editableDiv) {
+            const input = editableDiv.querySelector('input[type="text"]');
+            const checkbox = editableDiv.querySelector('input[type="checkbox"]');
+            const displaySpan = cell.querySelector('.display-content');
+            if (input && checkbox.checked && input.value.trim() !== "") {
+              const oldValue = displaySpan.textContent;
+              const newValue = input.value;
+              displaySpan.textContent = newValue;
+              cell.classList.add('verified');
+              const cellId = cell.getAttribute('data-cell-id');
+              if (!history[cellId]) {
+                history[cellId] = [];
+              }
+              history[cellId].push({
+                change: oldValue + " → " + newValue,
+                date: new Date().toLocaleString(),
+                documents: pendingDocuments[cellId] ? [...pendingDocuments[cellId]] : []
+              });
+              pendingDocuments[cellId] = [];
+              // Buidem l'input però deixem el camp editable visible
+              input.value = "";
+              checkbox.checked = false;
+              checkbox.disabled = true;
+              updateFlatData(cellId, newValue, oldValue);
+              // Actualitzem la clau del camp si és necessari
+              let oldId = cell.getAttribute("data-cell-id");
+              if(oldId.indexOf(oldValue) !== -1){
+                cell.setAttribute("data-cell-id", oldId.replace(oldValue, newValue));
+              }
+            }
+          }
+        });
+        updateButtonsVisibility();
+      }
+      
+      // Funció per obrir un selector d'arxius i afegir documentació al canvi corresponent.
+      function addDocument(cellId, changeIndex) {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf, .jpg, .png';
+        fileInput.addEventListener('change', function(event) {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const fileUrl = e.target.result;
+              const fileObj = { url: fileUrl, name: file.name };
+              if (typeof changeIndex === 'undefined') {
+                // Afegim als documents pendents (camp en edició)
+                if (!pendingDocuments[cellId]) {
+                  pendingDocuments[cellId] = [];
+                }
+                pendingDocuments[cellId].push(fileObj);
+                alert("Document afegit correctament als documents pendents!");
+              } else {
+                // Afegim al canvi validat corresponent
+                history[cellId][changeIndex].documents.push(fileObj);
+                alert("Document afegit correctament al canvi!");
+              }
+              // Actualitzem el contingut del popup
+              const cellElement = document.querySelector('[data-cell-id="' + cellId + '"]');
+              if (cellElement) {
+                showHistory({ preventDefault: function() {} }, cellElement);
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+        fileInput.click();
+      }
+      
+      // Funció per mostrar el menú contextual.
+      // Ara, determinem el mode d'edició basant-nos en el contingut de l'input:
+      // Si l'input té text, s'està editant i es mostren els documents pendents.
+      // Si l'input està buit, es mostra l'historial dels canvis validats.
+      function showHistory(event, cellOverride) {
+        event.preventDefault();
+        const cell = cellOverride || event.currentTarget;
+        if (!cell) return;
+        const cellId = cell.getAttribute('data-cell-id');
+        const editableDiv = cell.querySelector('.editable');
+        const input = editableDiv ? editableDiv.querySelector('input[type="text"]') : null;
+        const isEditing = input && input.value.trim() !== "";
+        const historyList = document.getElementById('historyList');
+        historyList.innerHTML = '';
+        
+        if (isEditing) {
+          // Si el camp està en edició, mostrem els documents pendents
+          const pendingDocs = pendingDocuments[cellId] || [];
+          if (pendingDocs.length > 0) {
+            pendingDocs.forEach(doc => {
+              const li = document.createElement('li');
+              const docLink = document.createElement('a');
+              docLink.href = doc.url;
+              docLink.textContent = doc.name;
+              docLink.classList.add('file-link');
+              docLink.target = '_blank';
+              li.appendChild(docLink);
+              historyList.appendChild(li);
+            });
+          } else {
+            historyList.innerHTML = '<li>No hi ha documents pendents.</li>';
+          }
+          // Botó per afegir documentació al canvi pendent
+          const addBtn = document.createElement('button');
+          addBtn.textContent = 'Afegir Documentació';
+          addBtn.classList.add('file-input');
+          addBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            addDocument(cellId);
+          });
+          historyList.appendChild(addBtn);
+          document.getElementById('historyPopup').classList.remove('hidden');
+          return;
+        }
+        
+        // Si l'input està buit, considerem que el camp està validat (no s'està editant)
+        if (history[cellId] && history[cellId].length > 0) {
+          history[cellId].slice().reverse().forEach((entry, index) => {
+            const li = document.createElement('li');
+            li.classList.add('history-item');
+            li.textContent = entry.date + ": " + entry.change;
+            if (entry.documents && entry.documents.length > 0) {
+              const docsList = document.createElement('ul');
+              entry.documents.forEach(doc => {
+                const docLi = document.createElement('li');
+                const docLink = document.createElement('a');
+                docLink.href = doc.url;
+                docLink.textContent = doc.name;
+                docLink.classList.add('file-link');
+                docLink.target = '_blank';
+                docLi.appendChild(docLink);
+                docsList.appendChild(docLi);
+              });
+              li.appendChild(docsList);
+            }
+            const docBtn = document.createElement('button');
+            docBtn.textContent = 'Afegir Documentació';
+            docBtn.classList.add('file-input');
+            docBtn.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              addDocument(cellId, history[cellId].length - 1 - index);
+            });
+            li.appendChild(docBtn);
+            historyList.appendChild(li);
+          });
+        } else {
+          historyList.innerHTML = '<li>No hi ha canvis per aquest camp.</li>';
+        }
+        document.getElementById('historyPopup').classList.remove('hidden');
+      }
+      
+      function showFullHistory() {
+        const fullHistoryList = document.getElementById('fullHistoryList');
+        fullHistoryList.innerHTML = '';
+        for (const cellId in history) {
+          if (history.hasOwnProperty(cellId)) {
+            const li = document.createElement('li');
+            li.innerHTML = "<strong>Camp " + cellId + ":</strong>";
+            const ul = document.createElement('ul');
+            history[cellId].slice().reverse().forEach((entry, index) => {
+              const subLi = document.createElement('li');
+              subLi.textContent = entry.date + ": " + entry.change;
+              if (entry.documents && entry.documents.length > 0) {
+                const docsList = document.createElement('ul');
+                entry.documents.forEach(doc => {
+                  const docLi = document.createElement('li');
+                  const docLink = document.createElement('a');
+                  docLink.href = doc.url;
+                  docLink.textContent = doc.name;
+                  docLink.classList.add('file-link');
+                  docLink.target = '_blank';
+                  docLi.appendChild(docLink);
+                  docsList.appendChild(docLi);
+                });
+                subLi.appendChild(docsList);
+              }
+              const docBtn = document.createElement('button');
+              docBtn.textContent = 'Afegir Documentació';
+              docBtn.classList.add('file-input');
+              docBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                addDocument(cellId, history[cellId].length - 1 - index);
+              });
+              subLi.appendChild(docBtn);
+              ul.appendChild(subLi);
+            });
+            li.appendChild(ul);
+            fullHistoryList.appendChild(li);
+          }
+        }
+        if (fullHistoryList.innerHTML === '') {
+          fullHistoryList.innerHTML = '<li>No hi ha canvis registrats.</li>';
+        }
+        document.getElementById('fullHistoryPopup').classList.remove('hidden');
+      }
+      
+      function updateButtonsVisibility() {
+        const editableDivs = document.querySelectorAll('.editable');
+        // Aquí es pot mantenir la lògica original dels botons
+        const hasVisibleEditable = Array.from(editableDivs).some(div => true);
+        document.getElementById('associateDocsBtn').classList.toggle('hidden', !hasVisibleEditable);
+        document.getElementById('validateBtn').classList.toggle('hidden', !hasVisibleEditable);
+        document.getElementById('showFullHistoryBtn').classList.toggle('hidden', !hasVisibleEditable);
+      }
+      
+      // En attachTableEvents, assegurem que la cel·la s'envia com a paràmetre (this) al contextmenu.
+      function attachTableEvents() {
+        document.querySelectorAll('.data-cell').forEach(cell => {
+          cell.removeEventListener('contextmenu', showHistory);
+          cell.addEventListener('contextmenu', function(e) {
+            showHistory(e, this);
+          });
+        });
+        document.querySelectorAll('.editable input[type="text"]').forEach(input => {
+          input.removeEventListener('input', onInputUpdate);
+          input.addEventListener('input', onInputUpdate);
+        });
+        document.querySelectorAll('.verifyCheckbox').forEach(checkbox => {
+          checkbox.removeEventListener('change', onCheckboxChange);
+          checkbox.addEventListener('change', onCheckboxChange);
+        });
+      }
+      
+      function onInputUpdate() {
+        const checkbox = this.parentElement.querySelector('.verifyCheckbox');
+        checkbox.disabled = this.value.trim() === '';
+        if (checkbox.disabled) {
+          checkbox.checked = false;
+        }
+      }
+      
+      function onCheckboxChange() {
+        const cell = this.closest('.data-cell');
+        const cellId = cell.getAttribute('data-cell-id');
+        if (this.checked) {
+          selectedChanges.push(cellId);
+        } else {
+          selectedChanges = selectedChanges.filter(id => id !== cellId);
+        }
+      }
+      
+      // Botó "Veure Modificacions": mostra o amaga els camps editables.
+      // Si l'input conté exactament el mateix text que el display (és a dir, no s'ha modificat manualment), es buida.
+      document.getElementById('toggleAllBtn').addEventListener('click', function() {
+        const editableDivs = document.querySelectorAll('.editable');
+        const showEditable = editableDivs.length > 0 && editableDivs[0].classList.contains('hidden');
+        if (showEditable) {
+          editableDivs.forEach(div => {
+            const input = div.querySelector('input[type="text"]');
+            const display = div.parentElement.querySelector('.display-content');
+            if (input && display && input.value === display.textContent) {
+              input.value = "";
+            }
+          });
+        }
+        editableDivs.forEach(div => {
+          div.classList.toggle('hidden', !showEditable);
+        });
+        this.textContent = showEditable ? 'Ocultar Modificacions' : 'Veure Modificacions';
+        updateButtonsVisibility();
+      });
+      
+      document.getElementById('validateBtn').addEventListener('click', validateChanges);
+      
+      document.getElementById('associateDocsBtn').addEventListener('click', function() {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf, .jpg, .png';
+        fileInput.addEventListener('change', function(event) {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const fileUrl = e.target.result;
+              const fileObj = { url: fileUrl, name: file.name };
+              const validSelected = selectedChanges.filter(cellId => {
+                const checkbox = document.querySelector(`td[data-cell-id="${cellId}"] .verifyCheckbox`);
+                return checkbox && checkbox.checked;
+              });
+              validSelected.forEach(cellId => {
+                if (!pendingDocuments[cellId]) {
+                  pendingDocuments[cellId] = [];
+                }
+                pendingDocuments[cellId].push(fileObj);
+              });
+              alert('Document afegit correctament als canvis seleccionats!');
+              selectedChanges = [];
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+        fileInput.click();
+      });
+      
+      document.getElementById('showFullHistoryBtn').addEventListener('click', showFullHistory);
+      
+      document.querySelectorAll('.data-cell').forEach(cell => {
+        cell.addEventListener('contextmenu', function(e) {
+          showHistory(e, this);
+        });
+      });
+      
+      // Tanquem els popups només si es clica directament al contenidor.
+      document.getElementById('historyPopup').addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.add('hidden');
+        }
+      });
+      document.getElementById('fullHistoryPopup').addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.add('hidden');
+        }
+      });
+      
+      updateButtonsVisibility();
+      attachTableEvents();
+      
+      /********** PART 3: FUNCIONALITAT DE FILTRES I ORDENACIÓ PER COLUMNES **********/
+      function filterTable() {
+        var tbody = document.querySelector("#hierarchicalTable tbody");
+        var rows = Array.from(tbody.rows);
+        var groups = [];
+        for (var i = 0; i < rows.length;) {
+          var firstCell = rows[i].cells[0];
+          var rs = firstCell.getAttribute("rowspan");
+          if (rs) {
+            rs = parseInt(rs);
+            groups.push(rows.slice(i, i + rs));
+            i += rs;
+          } else {
+            if (groups.length > 0) {
+              groups[groups.length - 1].push(rows[i]);
+            }
+            i++;
+          }
+        }
+        var filterInputs = document.querySelectorAll(".filterRow input");
+        var filters = Array.from(filterInputs).map(function(input) {
+          return input.value.toLowerCase();
+        });
+        groups.forEach(function(group) {
+          var record = [];
+          var headerCount = 4;
+          var cells = group[0].cells;
+          for (var i = 0; i < headerCount; i++) {
+            if (cells[i])
+              record.push(cells[i].textContent.trim().toLowerCase());
+            else
+              record.push("");
+          }
+          var match = true;
+          for (var i = 0; i < filters.length; i++) {
+            if (filters[i] && record[i].indexOf(filters[i]) === -1) {
+              match = false;
+              break;
+            }
+          }
+          group.forEach(function(row) {
+            row.style.display = match ? "" : "none";
+          });
+        });
+      }
+      
+      var filterInputs = document.querySelectorAll(".filterRow input");
+      filterInputs.forEach(function(input) {
+        input.addEventListener("keyup", filterTable);
+        input.addEventListener("change", filterTable);
+      });
+      
+      var headerCells = document.querySelectorAll("#headerRow th");
+      var sortOrder = [1, 1, 1, 1];
+      headerCells.forEach(function(th, index) {
+        th.style.cursor = "pointer";
+        th.addEventListener("click", function() {
+          sortGroups(index);
+        });
+      });
+      
+      function getGroups() {
+        var tbody = document.querySelector("#hierarchicalTable tbody");
+        var rows = Array.from(tbody.rows);
+        var groups = [];
+        for (var i = 0; i < rows.length;) {
+          var firstCell = rows[i].cells[0];
+          var rs = firstCell.getAttribute("rowspan");
+          if (rs) {
+            rs = parseInt(rs);
+            groups.push(rows.slice(i, i + rs));
+            i += rs;
+          } else {
+            if (groups.length > 0) {
+              groups[groups.length - 1].push(rows[i]);
+            }
+            i++;
+          }
+        }
+        return groups;
+      }
+      
+      function getRecordFromGroup(group) {
+        var record = [];
+        var headerCount = 4;
+        var cells = group[0].cells;
+        for (var i = 0; i < headerCount; i++) {
+          if (cells[i])
+            record.push(cells[i].textContent.trim().toLowerCase());
+          else
+            record.push("");
+        }
+        return record;
+      }
+      
+      function sortGroups(columnIndex) {
+        var groups = getGroups();
+        groups.sort(function(a, b) {
+          var recA = getRecordFromGroup(a);
+          var recB = getRecordFromGroup(b);
+          if (recA[columnIndex] < recB[columnIndex]) return -sortOrder[columnIndex];
+          if (recA[columnIndex] > recB[columnIndex]) return sortOrder[columnIndex];
+          return 0;
+        });
+        sortOrder[columnIndex] *= -1;
+        var tbody = document.querySelector("#hierarchicalTable tbody");
+        tbody.innerHTML = "";
+        groups.forEach(function(group) {
+          group.forEach(function(row) {
+            tbody.appendChild(row);
+          });
+        });
+        attachTableEvents();
+      }
+    });
+  </script>
+</body>
+</html>
