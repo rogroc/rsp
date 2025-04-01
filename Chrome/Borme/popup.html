@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Popup</title>
+  <script src="popup.js"></script>
+  <script src="pdf.min.js"></script>
+  <script src="xlsx.full.min.js"></script>
+  <script src="pdf.worker.min.js"></script>
+</head>
+<body>
+
+<style>
+/* Ajusta la grandària de tots els elements de la pàgina al doble */
+* {
+  transform: scale(1); /* Escala tots els elements al doble de mida */
+  transform-origin: 0 0; /* Estableix l'origen de l'escala a la part superior esquerra (punta superior esquerra) */
+}
+
+</style>
+
+  <label for="dateInput">Introdueix una data (yyyy/mm/dd):</label>
+  <input type="text" id="dateInput" placeholder="yyyy/mm/dd">
+  <button id="openUrlButton">Obrir URL</button>
+  <img id="loadingImage" src="processant.gif" alt="Càrrega en curs" style="display: none;">
+  <p id="loadingText" style="display: none;">Processant...</p>
+</body>
+</html>

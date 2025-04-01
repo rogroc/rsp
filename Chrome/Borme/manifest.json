@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+  "name": "BORME",
+  "version": "1.0",
+  "description": "Cercador d'entitats del RSP al BORME",
+  "permissions": [
+  "activeTab",
+  "webRequest",
+  "webRequestBlocking",
+  "tabs",   // Necessari per utilitzar chrome.tabs.create
+  "https://www.boe.es/*"  // Afegeix el domini al qual fas les peticions
+],
+
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png"
+    }
+
+  },
+  "icons": {
+    "16": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["popup.js"]
+    }
+  ]
+}
