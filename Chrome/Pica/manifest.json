@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+  "name": "PICA Fundacions càrrecs vigents",
+  "version": "1.0",
+  "description": "Extreu els càrrecs vigents de la consulta de fundacions de la PICA",
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png"
+    }
+  },
+  "permissions": ["activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["https://web.pica.intranet.gencat.cat/*"],
+      "js": ["jquery-3.6.0.min.js"]
+    },
+    {
+      "matches": ["https://web.pica.intranet.gencat.cat/*"],
+      "js": ["popup.js", "buttons.html5.min.js", "dataTables.buttons.min.js", "jquery.dataTables.min.js", "jszip.min.js"],
+      "css": ["jquery.dataTables.min.css"]
+    }
+  ]
+}
