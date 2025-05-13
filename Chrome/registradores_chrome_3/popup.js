@@ -10,10 +10,11 @@ async function consultaNIF(nif) {
     _org_registradores_opendata_portlet_BuscadorSociedadesPortlet_mvcRenderCommandName: '/sociedades',
     _org_registradores_opendata_portlet_BuscadorSociedadesPortlet_term: nif
   });
-  const url = `${base}?${params.toString()}`;
+  const url = 'https://opendata.registradores.org/directorio?p_p_id=org_registradores_opendata_portlet_BuscadorSociedadesPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=%2Fopendata%2Fsociedades&p_p_cacheability=cacheLevelPage&_org_registradores_opendata_portlet_BuscadorSociedadesPortlet_mvcRenderCommandName=%2Fsociedades&_org_registradores_opendata_portlet_BuscadorSociedadesPortlet_term='+nif;
 
   // Envia la petició i espera 10 segons perquè el servei generi el JSON
   await new Promise(res => setTimeout(res, 3000));
+
   const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
   if (!resp.ok) throw new Error(`Resposta HTTP ${resp.status}`);
 
