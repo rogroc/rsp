@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consulta NIF</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 1rem; }
+    input, button { font-size: 1rem; padding: 0.3rem; margin-right: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    th { background: #f0f0f0; }
+    #missatge { margin-top: 1rem; color: #333; }
+  </style>
+</head>
+<body>
+  <h2>Consulta NIF Registradors</h2>
+  <input type="text" id="nif" placeholder="Introdueix NIF (e.g. B08282626)" />
+  <button id="cerca">Cerca</button>
+  <div id="missatge"></div>
+  <div id="resultat" style="display:none;">
+    <table id="taula-resultats">
+      <thead>
+        <tr><th>Clau</th><th>Valor</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
