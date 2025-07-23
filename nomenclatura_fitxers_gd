@@ -1,0 +1,321 @@
+	No s’ha d’indicar en la denominació de l’arxiu que es carrega el nom de l’entitat en la que es carrega el document. Cal aprofitar l’espai definir el document o el seu contingut amb més detall per facilitar-ne la cerca. 
+
+	El nom del fitxer ha de començar amb la data del document en format YYYYmmdd.
+
+	Cal utilitzar abreviatures en la denominació de l’arxiu que es carrega en el Gestor documental d’acord amb el glossari següent:
+
+GC	Generalitat de Catalunya		CA	Consell d’Administració
+Ajt	Ajuntament		CCAA	Comptes anuals
+AG 	Acord del Govern		Cessam	Cessament
+EP	Escriptura pública		Nomen	Nomenament
+Acta prot	Acta de protocol·lització		Modif estat	Modificació d’estatuts
+RF	Registre Fundacions		AK	Augment capital
+RM	Registre Mercantil		RK	Reducció capital
+NS	nota simple		CG act i pass	Cessió global d’actius i passius
+BOP	Butlletí oficial de la província		Dissol	Dissolució
+DOGC	Diari oficial de la GC		Liquid	Liquidació
+BOE	Butlletí Oficial de l’Estat		Extinc	Extinció
+Modif	Modificació		Resol	Resolució
+Art	Article		Cont	Contracte
+Certif	Certificat		Conv	Conveni
+JG	Junta General		PEF	Pla Econòmic Financer
+
+4 – DADES JURÍDIQUES
+1.	Norma o acte jurídic de creació, estatuts i modificacions 
+
+•	En aquest apartat, correspon arxivar la documentació relativa a la creació o participació en una entitat, estatuts i les seves modificacions i variació en el percentatge de participació directe o indirecte de la Generalitat de Catalunya. En canvi, a l’apartat “Altres” dins de la categoria “Dades jurídiques”, correspon arxivar els documents relatius a l’extinció de l’entitat, sortida de la Generalitat d’aquesta entitat, o modificacions estructurals de l’entitat (fusió, escissió, cessió global d’actius i passius...).
+
+•	L’arxiu que conté la refosa d’uns estatuts, es pot pujar al Gestor un cop aquesta s’hagi inscrit en el Registre corresponent, o hagi estat publicada en el butlletí oficial corresponent. En la denominació cal indicar que es tracta d’una refosa.
+
+•	La modificació parcial d’estatuts també cal pujar-la un cop aquesta s’hagi inscrit en el Registre corresponent, o hagi estat publicada en el butlletí oficial corresponent. En la denominació de l’arxiu cal indicar si es tracta d’una modificació d’objecte, condició de mitjà propi, adscripció, tipus d’administració, o composició de l’òrgan de govern... o bé la indicació dels números dels articles modificats, si no se’n modifiquen gaires. 
+
+•	No s’han de carregar en el Gestor documentals documents de refosa d’estatuts que no procedeixin del Portal jurídic, DOGC, BOE, o escriptures públiques de refosa d’estatuts inscrites al Registre Mercantil o de Fundacions.
+
+A continuació s’exposen qüestions que cal tenir en compte en el moment de pujar documents al Gestor documental, atenent a la tipologia d’ens, ateses les seves peculiaritats.
+FUNDACIONS 
+En aquest apartat cal arxivar l’escriptura pública d’atorgament de la carta fundacional, la de constitució i les modificacions parcials successives dels estatuts, i refoses. 
+Quan es disposi de l’escriptura pública amb la Diligència d’inscripció en el Registre de Fundacions, cal suprimir l’escriptura pública encara no inscrita, si aquesta es trobés emmagatzemada en el Gestor documental.
+En el nom del document que es carrega, cal indicar si es tracta d’una Escriptura pública o un Acord de Govern, i si és de creació o carta fundacional, modificació parcial d’estatuts (amb indicació dels articles que es modifiquen) o refosa. 
+Exemples noms arxius:
+
+Fundació 1	Fundació 2
+EP carta fundacional	EP constitució
+EP modificació estatuts art 3,4	EP refosa estatuts
+EP modificació estatuts varis articles	EP modif estatuts Patronat
+EP modificació estatuts patronat no inscrita	AG modificació estatuts art 8 
+
+SOCIETATS MERCANTILS 
+En aquest apartat cal arxivar l’acord del Govern que autoritza la seva constitució o participació de la Generalitat o un ens del seu sector públic en societat mercantil existent, així com l’escriptura pública de constitució i les modificacions parcials successives dels estatuts. En el moment en el que consti l’escriptura pública amb la Diligència d’inscripció en el Registre Mercantil, cal suprimir l’escriptura pública encara no inscrita, si aquesta es trobés emmagatzemada en el gestor documental.
+A més, la participació de la Generalitat en una societat mercantil pot venir donada per l’adquisició d’accions o participacions a través d’una escriptura pública. En el nom del document que es carrega al Gestor documental, cal fer constar l’entitat a qui se li compren, com a referència. En el cas de que es venguin part o totes les accions, es cal fer constar en el nom del document que es carrega, a qui se li venen. Igualment també es pot entrar en una societat mercantil adquirint accions en una operació d’augment de capital. Caldrà indicar en la denominació de l’arxiu que es carrega: l’instrument pel qual es realitza l’operació, com escriptura pública, acta de protocol·lització ... i la descripció de l’operació de què es tracta, com adquisició d’accions, augment de capital, etc ...
+Els augments i disminucions de capital, que poden implicar un canvi en el percentatge de la participació de la Generalitat o les seves entitats participades, cal identificar-los indicant el capital aproximat de la reducció o ampliació (per exemple: 14,8ME, 8,4ME, 9,8ME, etc...) i quin és el soci que concorre en l’ampliació o reducció (fent-ho constar en el nom del document que es carrega), quan aquesta no s’articuli mitjançant l’augment o reducció del valor global de les accions o participacions.
+També cal indicar en el nom del document que es carrega si es tracta d’una consulta d’estatuts al Registre Mercantil. En aquest cas, com a data del document cal informar la data d’emissió dels estatuts pel Registre Mercantil, en el moment en que es carrega el document en el Gestor documental.
+Exemples noms arxius:
+Societat mercantil 1	Societat mercantil 2	Societat mercantil 3
+EP constitució	EP AK 5ME GC	Consulta RM estatuts
+EP modificació estatuts objecte	EP modificació estatus art 8,12,16,17,19 	EP adquisició accions Infraestructures
+EP modificació estatuts mitjà propi	EP modificació art 2	EP AK 9,8ME Port Bcn i Fira 2000
+EP AK 14,8ME Ajt. Bcn	AG AK 4,8ME GC i Ajt Bcn 	EP refosa estatus
+AG modificació estatuts art 24, 27, 30	Consulta RM estatuts	EP alienació accions Infraestructures - Port Bcn
+EP compra accions Mercabarna, SA	
+EP compra accions Transports Bohí, SL	
+
+
+ENTITATS AUTÒNOMES DE LA GENERALITAT QUE FACIN OPERACIONS O PRESTIN SERVEIS DE CARÀCTER PRINCIPALMENT COMERCIAL, INDUSTRIAL O FINANCER O ENTITATS DE DRET PÚBLIC
+Cal carregar al Gestor documental la Llei que crea l’entitat i el Decret que regula els estatuts, com a documents separats, publicats en el DOGC, i les versions consolidades que hi ha al Portal jurídic de la Generalitat, si les hi ha. En cap cas s’han de carregar en el Gestor documental versions consolidades que no siguin procedents del Portal jurídic. En el nom del document cal fer constar si es tracta de una Llei o decret, el número i l’any, i si es tracta d’una modificació parcial d’estatuts o refosa.
+En cas que es tracti d’un pdf amb un gran nombre de pàgines, seleccionar només les que afecten a l’entitat de què es tracta.
+Exemple:
+Agència Catalana del Patrimoni Cultural
+Al Gestor documental, cal carregar:
+-	Creació i regulació, continguda als articles 71 a 76, Disposició addicional 16ª i Disposició transitòria 4ª de la Llei 7/2011, en la seva versió consolidada del Portal Jurídic de Catalunya (que incorpora les modificacions efectuades per Llei 11/2011, de 29 de desembre, de reestructuració del sector públic per a agilitar l'activitat administrativa i la Llei 3/2015, de l'11 de març, de mesures fiscals, financeres i administratives). Del Pdf complet de la Llei 7/2011, de 45 pàgines d’extensió, al Gestor Documental s’ha de carregar un Pdf més reduït en el que consten únicament les pàgines 34 a 36 (que contenen els articles 71-76), la pàgina 42 (que conté la Disposició addicional 16ª) i la pàgina 43 (que conté la Disposició final quarta) que regulen l’Agència. 
+-	Els estatuts es contenen al Decret 198/2013, de 23 de juliol, pel qual s'aproven els Estatuts de l'Agència Catalana del Patrimoni Cultural.
+Exemple noms arxius::
+Agència Catalana del Patrimoni Cultural
+Llei 7-2011 mesures fiscals i financeres creació
+
+Decret 198-2013 estatuts
+
+CONSORCIS
+
+En aquest apartat cal arxivar l’acord del Govern que autoritza la seva constitució o participació de la Generalitat o un ens del seu sector públic en un consorci existent, i les modificacions parcials successives dels estatuts, publicats en el DOGC. 
+En el cas de que la constitució del consorci o els seus estatuts es continguin en un decret cal arxivar la versió consolidada que hi ha al Portal jurídic de la Generalitat.
+Cal arxivar en aquest apartat el certificat del secretari del consorci que acredita que la modificació dels estatuts ha estat ratificada per tots els membres.
+En el nom del document que es carrega, cal indicar si es tracta d’un Acord de Govern o Decret, si és de constitució, modificació parcial d’estatuts (amb indicació dels articles que es modifiquen) o refosa. 
+Exemples noms arxius:
+
+Consorci Institut Ramon Llull	Consorci Sanitari de Terrassa
+AG 12-2014 refosa	Decret 416-2006
+AG 133-2015 modif estatuts art 13,15,16 bis,17,18,20,21,22	
+Certificat ratificació modificació estatuts	
+
+2.	Actes i acords dels òrgans de govern
+
+•	Cal carregar les actes dels acords del òrgans de govern, així com els certificats de les actes que emetin els seus secretaris, amb la indicació en la denominació de que és una acta, o el certificat del secretari, i una breu descripció del contingut de l’acord.
+
+•	Si una mateixa acta conté acords de dos tipus, com per exemple, aprovació de comptes i nomenament de càrrecs, cal incloure aquesta informació en el nom de l’arxiu que es carrega, i arxivar-la també al subtipus “Nomenaments i cessaments” o “Altres”, en el cas de que es tracti d’un acord d’extinció o relatiu a una operació estructural de l’entitat (fusió, escissió, cessió global d’actius i passius...) ajustant la denominació de l’arxiu per poder reconèixer el contingut.
+
+SOCIETATS MERCANTILS
+Les actes de la Junta General d’aprovació de comptes cal arxivar-les en aquesta categoria “d’Actes i acords de l’òrgan de govern”. En el nom de l’acta que es carrega cal fer constar l’òrgan del qual procedeix: Junta General (JG) o Consell d’Administració (CA).
+Exemples noms arxius:
+
+Societat mercantil 1	Societat mercantil 2	Societat mercantil 3
+Acta JG constitució i nomen CA	Acta JG AK 16,1ME GC	Acta CA formulació CCAA 2014
+Acta CA formulació CCAA 2015	Acta JG modificació estatuts art 8,12,16,17,19 	Acta JG aprovació CCAA 2014
+Acta JG aprovació CCAA 2015, cessam i nom consellers	Acta CA formulació CCAA 2014 	Acta JG modif estatuts objecte
+Acta JG RK 0,3ME 	Acta JG aprovació comptes 2014, cessam i nomen consellers	Acta JG aprovació CCAA 2014 AK 9,8ME Ajt Bcn i AMB
+	Acta AG ampliació capital GC i Ajt Barcelona 	Acta JG dissol i líquid i nomen liquidadors
+	
+CONSORCIS
+Cal arxivar en aquest apartat l’acta de constitució del Consorci, o la de recepció d’actius i passius d’una altra entitat, i qualsevol altra que pugui afectar el consorci, amb indicació del seu contingut en el nom de l’arxiu.
+3.	Nomenaments i cessaments
+
+En aquest apartat cal arxivar, entre d’altres, els documents següents: acords de Govern de proposta de nomenament de consellers en entitats, resolucions de nomenaments de càrrecs, actes de les Juntes Generals de nomenaments o cessaments de consellers, certificats de composició emesos pel secretari de l’òrgan de govern i consultes emeses al Registre Mercantil o de Fundacions sobre consellers i patrons de les societats i fundacions, respectivament. En el nom del fitxer sempre ha de constar el nom de la persona nomenada o cessada.
+
+
+
+FUNDACIONS
+
+Cal arxivar els informes de la DGDEJ sobre la composició del Patronat.
+
+En el moment de carregar la Consulta del Patronat d’una Fundació emesa pel Registre de Fundacions cal fer constar la data d’emissió de la Consulta. Aquesta consulta cal carregar-la en aquest apartat, però també al de “Registres Oficials”. 
+Si amb posterioritat a la càrrega de les actes de nomenament de patrons, es disposa de l’escriptura pública en la que aquesta s’hi troba protocol·litzada, cal substituir l’acta per l’escriptura pública.
+
+Exemple noms arxius:
+Fundació 1	Fundació 2
+EP carta fundacional	Informe DGDEJ composició patronat
+Consulta RF patronat	Resol Conseller ECO nomen patró
+Certif secretari patronat	Acta nomen patró
+
+SOCIETATS MERCANTILS
+Si amb posterioritat a la càrrega de les actes de nomenament de consellers, es disposa de l’escriptura pública en la que aquesta s’hi troba protocol·litzada, cal substituir l’acta per l’escriptura pública.
+
+En el moment de carregar la Consulta dels administradors d’una societat emesa pel Registre Mercantil cal fer constar la data d’emissió de la Consulta. Aquesta consulta cal carregar-la en aquest apartat, però també al de “Registres Oficials”. 
+Les publicacions en el BORME dels nomenaments de consellers es poden arxivar en l’apartat “Registres oficials”.
+
+Exemple noms arxius:
+Societat 
+Consulta RM càrrecs
+AG proposta conseller
+Acta JG nomen i cessam consellers
+
+4.	Registres oficials i publicacions oficials
+
+•	En aquest apartat cal arxivar les consultes efectuades a Registres oficials relatives als estats registrals d’alta o baixa, així com relatives a òrgans de govern d’entitats. 
+
+•	També cal arxivar en aquest apartat les consultes efectuades a l’Inventario de Entes del Sector Público Estatal, o a l’Inventario de Entes del Sector Público, que depenen de l’IGAE, o bé del Registre del Sector Públic Local de Catalunya, adscrit a la Direcció General d’Administració Local.
+
+•	Les consultes a Registres de la Propietat sobre béns immobles caldrà arxivar-les, per la seva especificitat dins de la categoria “Altres”, a l’apartat “Patrimoni immobiliari: adquisició o alienació, arrendaments i similars, i taxacions”.
+
+
+SOCIETATS MERCANTILS
+
+En el Butlletí Oficial del Registre Mercantil es fa la publicitat de la inscripció de les modificacions d’estatuts, cessaments i nomenaments de càrrecs, dissolució d’una societat, nomenament de liquidadors, extinció... S’ha de carregar només la pàgina concreta del  BORME que conté l’anunci que afecta a l’entitat. En el moment de la càrrega del document en el Gestor documental, la data del document que es fa constar és la data d’inscripció en el Registre Mercantil. Però en el nom del document es fa constar que es tracta d’un BORME i l’acte que es publica.
+
+Exemple noms arxius:
+
+Societat 1	Societat 2
+BORME nomen administradors	BORME RK 1,3ME
+BORME modificació estatuts	BORME dissolució i nomen liquidadors
+Consulta RM administradors	BORME extinció
+
+FUNDACIONS
+Cal arxivar en aquest apartat la consulta al Registre de Fundacions sobre l’estat inscrita o extingida d’una fundació, així com la consulta sobre el Patronat d’una fundació. En el moment de carregar el document al Gestor documental, cal indicar la data en la que s’ha efectuat la consulta.
+Exemple noms arxius:
+Fundació 1
+Consulta RF estat inscrita
+Consulta RF patronat
+Consulta RF estat extingida
+
+CONSORCIS
+Cal arxivar en aquesta carpeta les publicacions als butlletins provincials o al DOGC que contenen la ratificació dels òrgans plenaris dels ens locals de la modificació dels estatuts del consorcis dels que formen part, i no a la de “Norma o acte jurídic de creació, estatuts i modificacions”. 
+En el nom del document cal indicar el butlletí oficial en el que es publica i entitat local que efectua la ratificació d’estatuts. En el moment de la càrrega del document com a data de producció del document es fa constar la data de publicació del document en el butlletí oficial de que es tracti.
+Exemple noms arxius:
+Consorci 
+BOP Bcn Ajt Barcelona ratificació estatuts 
+BOP Bcn Ajt.Vilafranca Penedès ratificació estatuts
+BOP Bcn Ajt St Sadurní ratificació estatuts
+
+
+5.	Altres
+
+•	A l’apartat “Altres” dins de la categoria “Dades jurídiques”, s’emmagatzemen els documents relatius a l’extinció de l’entitat, sortida de la Generalitat d’aquesta entitat, o modificacions estructurals de l’entitat, així com altres documents de caràcter jurídic que no s’hagin pogut arxivar en cap altra categoria específica de les fins ara definides, com per exemple, pactes extraestatutaris amb altres socis o compromisos d’adquisició d’accions.
+
+•	Correspon arxivar en aquest apartat l’Acord del Govern pel qual s’autoritza l’alienació, la participació de la Generalitat o de les entitats del seu sector públic en el capital de la societat mercantil de la que es tracti, les escriptures de venda d’accions o participacions que impliquen la sortida d’aquesta entitat de la Generalitat o de les seves entitats dependents, l’Acord del Govern de separació d’un consorci, així com l’acta en la que es determina la quota de separació...
+
+•	També s’han d’inscriure en aquest apartat, les escriptures públiques de fusió, escissió, cessió global d’actiu i passiu, dissolució i liquidació, i altres relatives a operacions estructurals de les entitats.
+
+Exemples 
+
+Sortida d’AVANÇSA de COMPACT HABIT, SL		Extinció d’una Fundació
+
+COMPACT HABIT, SL		Fundació XXX
+AG autoritza Avança RK 2,3ME		AG extinció F XXX i CG act i pass a F YYY
+Acta protocol extinció relació Avançsa-Compact Habit		Resol DGDEJ dissolució F XXX i CG act i pass a F YYY 
+EP RiAK		EP extinció F XXX i CG act i pass a F YYY
+
+
+Separació GC d’un Consorci		Fusió per absorció per F YYY
+Consorci XXX		Fundació XXX
+AG separació GC 		AG fusió per absorció  F XXX amb F YYY
+Acta Consell General quota separació		Projecte de fusió F XXX amb FYYY
+		Aprovació Protectorat Fusió FXXX amb FYYY
+		EP fusió per absorció  F XXX amb F YYY
+
+5 – DADES ECONÒMIQUES
+1.	Pressupostos
+
+La informació relativa al pressupost anual aprovat serà inclosa al gestor documental directament per part del departament competent en matèria de pressupostos. En el cas que l’entitat no estigui inclosa en l’àmbit de la Llei de Pressupostos de la Generalitat, cal incorporar el pressupost aprovat en cada exercici per l’òrgan de govern de cada entitat.
+En aquest apartat també cal arxivar els acords de Govern diligenciats de pluriennalitats associades a contractes programa, plans economicofinancers, inversions, funcionament, aportacions de capital, endeutaments o qualsevol altra. 
+Per últim, en aquest apartat també cal arxivar les bases d’execució del pressupost de les entitats.
+Resum:
+•	Pressupost anual de l’entitat (l’aprovat per l’òrgan competent de l’entitat)
+•	Pluriennalitats i les seves modificacions (l’acord de govern diligenciat)
+•	Bases d’execució del pressupost (les aprovades per l’òrgan competent de l’entitat)
+
+Exemple noms arxius:
+Pressupost inicial 2015
+Pluriennalitat CP 2015-2017
+Modif Pluriennalitat CP 2015-2017
+Pluriennalitat Préstec BBVA 2,5 M
+Modif Pluriennalitat Préstec BBVA 2,5 M
+Bases execució pressupost 2015 
+
+2.	Comptes anuals PCI
+
+La informació relativa al pressupost anual aprovat serà inclosa al gestor documental directament per inclosa per part de la Intervenció General en el cas que l’entitat hagi efectuat la tramesa dels seus comptes anuals a través de la PCI. 
+
+3.	Comptes anuals no tramesos PCI
+
+En aquest apartat cal arxivar els comptes anuals de l’entitat que no han estat tramesos a través del PCI. Els comptes anuals han d’incloure, si és que existeix, l’informe d’auditoria en el mateix arxiu.
+Exemple noms arxius:
+CCAA 2015
+CCAA 2015 amb informe auditoria
+
+Els comptes anuals hauran d’incloure la liquidació del pressupost en el cas que, d’acord amb la tipologia de cada entitat, la normativa vigent així ho estableixi.
+4.	Informes auditoria
+
+Aquests informes no són els informes d’opinió sobre els comptes anuals atès que aquests ja s’inclouen en els subtipus Comptes anuals PCI o Comptes anuals no tramesos PCI.
+
+En aquest subtipus cal incloure altres informes elaborats per auditors, com per exemple, un informe de procediments acordats, els informes d’òrgans de fiscalització externa (Sindicatura de Comptes i Tribunal de Comptes); informes de valoració; due diligence; o altres elaborats per experts independents. 
+
+Exemple noms arxius:
+Informe Sindicatura Comptes exercicis 2013, 2014 i 2015
+Informe valoració compra accions EMPRESA, SA
+Due diligence adquisició EMPRESA, SA
+Informe procediments acordats sobre xxx
+
+5.	Endeutament
+
+En aquest subtipus cal carregar els contractes  associats a qualsevol endeutament o operació de cobertura (préstecs, arrendaments financers, facturatge sense recurs, facturatge invers amb post finançament o confirming, avals, pòlisses de crèdit, operacions de cobertura de risc de tipus d’interès o de tipus de canvi, censos emfitèutics, disposicions de la pòlissa corporativa o cash-pooling, garanties, avals, etc.). També es poden incloure els convenis amb altres administracions públiques relatius a préstecs o bestretes reemborsables. 
+Resum:
+•	contractes relacionats amb les operacions esmentades i les seves modificacions
+•	convenis relatius a préstecs o bestretes reemborsables i les seves modificacions
+•	acords de govern o similars autoritzant operacions endeutament
+
+Exemple noms arxius:
+AG autorització endeutament 3M€
+Cont préstec 10 M€ BBVA
+Cens emfitèutic Pg de Sant Joan, 43
+
+
+6.	Cash-pooling
+
+Caldria incloure el contracte d’adhesió al cash-pooling, modificacions o baixa. 
+Exemple noms arxius:
+Cont d’adhesió cash-pooling
+Modif cont d’adhesió cash-pooling
+
+7.	Inversions financeres
+
+En aquest subtipus cal incloure la documentació relacionada amb l’adquisició d’actius financers, que puguin ser representats en títols valors, anotacions en compte, contractes de préstecs o qualsevol altre document que inicialment els reconegui (bons, obligacions, pagarés, accions, futurs, opcions, ...). Addicionalment, també cal fer referència a les aportacions al compte de capital o fons patrimonial.
+Resum:
+•	Adquisició d’actius financers
+•	Aportacions a compte de capital o fons patrimonial
+•	Concessió de préstecs i bestretes
+
+Exemple noms arxius:
+Adquisició pagarés EMPRESA, SA
+Adquisició accions EMPRESA, SA
+Crèdit a EMPRESA, SA
+Aportació capital a Consorci X
+
+
+
+
+8.	Fiscal: informes, dictàmens, actes administratius i sentències
+
+En aquest subtipus cal arxivar els informes elaborats per assessorar sobre aspectes fiscals relatius a l’entitat o determinades operacions o sobre assumptes contenciosos amb la hisenda pública. 
+També cal arxivar consultes tributàries realitzades a la Direcció General de Tributs del Ministeri d’Hisenda i Administracions Públiques així com informes d’especial rellevància, declaració censal d’alta, modificació o baixa, certificats tributaris, reclamacions economicoadministratives, resolucions de reclamacions economicoadministratives, sentències tributàries i altres relacionats amb la fiscalitat de les entitats.
+Exemples noms arxius:
+Sentència TSuprem IVA 	Reclamació ecoadmva IVA
+Resolució TEAC IVA	Certif règim IVA
+Alta NIF	Certif subjecció IS
+Modificació censal	Informe assessorament IVA
+
+9.	Altres
+
+•	Consultes de l’Institut de Comptabilitat i Auditoria de Comptes (ICAC) 
+•	Plans de viabilitat
+•	Consultes de l’Institut de Comptabilitat i Auditoria de Comptes (ICAC)
+•	Instruccions de contracció internes 
+•	Programes d'actuació, d'inversions i de finançament o similars
+•	Contractes comercials
+•	Subvencions
+•	
+Exemples noms arxius:
+Pla de viabilitat 2015
+Modificació pla de viabilitat 2015
+PAIF 2015
+Modificació PAIF 2015
+Consulta ICAC criteris subvencions
+Contracte amb EMPRESA, SA
+Subvenció Ministeri cultura projecte ZETA
+
+
+6 – ALTRES.
+La categoria Altres està prevista pels següents tipus de documents:
+
+•	Contracte programa; Plans activitat; Plans estratègics 
+•	Convenis i acords amb Generalitat o altres administracions
+•	Conveni col·lectiu personal 
+•	Patrimoni immobiliari: adquisició o alienació, arrendaments i similars i taxacions 
+ 
