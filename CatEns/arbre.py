@@ -24,28 +24,65 @@ def init_db():
     cur.execute('''
         CREATE TABLE IF NOT EXISTS particips (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nom TEXT UNIQUE
+            nom TEXT UNIQUE,
+            eliminat INTEGER DEFAULT 0,
+            data_eliminacio TEXT
         )
     ''')
+    try:
+        cur.execute("ALTER TABLE particips ADD COLUMN eliminat INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE particips ADD COLUMN data_eliminacio TEXT")
+    except sqlite3.OperationalError:
+        pass
+
     cur.execute('''
         CREATE TABLE IF NOT EXISTS membres (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nom TEXT,
             particip_id INTEGER,
+            dret_vot INTEGER DEFAULT 0,
+            eliminat INTEGER DEFAULT 0,
+            data_eliminacio TEXT,
             UNIQUE(nom, particip_id),
             FOREIGN KEY(particip_id) REFERENCES particips(id) ON DELETE CASCADE
         )
     ''')
+    try:
+        cur.execute("ALTER TABLE membres ADD COLUMN dret_vot INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE membres ADD COLUMN eliminat INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE membres ADD COLUMN data_eliminacio TEXT")
+    except sqlite3.OperationalError:
+        pass
+
     cur.execute('''
         CREATE TABLE IF NOT EXISTS persones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nom TEXT,
             membre_id INTEGER,
+            eliminat INTEGER DEFAULT 0,
+            data_eliminacio TEXT,
             UNIQUE(nom, membre_id),
             FOREIGN KEY(membre_id) REFERENCES membres(id) ON DELETE CASCADE
         )
     ''')
-    # Noves taules per a validacions i percentatges
+    try:
+        cur.execute("ALTER TABLE persones ADD COLUMN eliminat INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE persones ADD COLUMN data_eliminacio TEXT")
+    except sqlite3.OperationalError:
+        pass
+
     cur.execute('''
         CREATE TABLE IF NOT EXISTS validacions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -191,23 +228,30 @@ class ArbreApp(tk.Tk):
         self.item_meta[entitat_item] = {'type':'entity', 'db_id': None, 'eliminar':False, 'dret_vot':False}
         conn = sqlite3.connect(DB_FILE)
         cur = conn.cursor()
-        cur.execute('SELECT id, nom FROM particips ORDER BY nom')
+        cur.execute('SELECT id, nom FROM particips WHERE eliminat IS NULL OR eliminat = 0 ORDER BY nom')
         parts = cur.fetchall()
         for pid, pname in parts:
             p_item = self.tree.insert(entitat_item, 'end', text=pname, open=True, tags=('particip',))
             self.item_meta[p_item] = {'type':'particip', 'db_id': pid, 'eliminar':False, 'dret_vot':False}
-            cur.execute('SELECT id, nom FROM membres WHERE particip_id=? ORDER BY nom', (pid,))
+            cur.execute('SELECT id, nom, dret_vot FROM membres WHERE (eliminat IS NULL OR eliminat = 0) AND particip_id=? ORDER BY nom', (pid,))
             membres = cur.fetchall()
-            for mid, mname in membres:
+            for mid, mname, dret_vot in membres:
                 m_item = self.tree.insert(p_item, 'end', text=mname, open=True, tags=('member',))
-                self.item_meta[m_item] = {'type':'member', 'db_id': mid, 'eliminar':False, 'dret_vot':False}
-                cur.execute('SELECT id, nom FROM persones WHERE membre_id=? ORDER BY nom', (mid,))
+                self.item_meta[m_item] = {
+                    'type': 'member',
+                    'db_id': mid,
+                    'eliminar': False,
+                    'dret_vot': bool(dret_vot),
+                    'dret_vot_original': bool(dret_vot)
+                }
+                cur.execute('SELECT id, nom FROM persones WHERE (eliminat IS NULL OR eliminat = 0) AND membre_id=? ORDER BY nom', (mid,))
                 persones = cur.fetchall()
                 for perid, pernom in persones:
                     per_item = self.tree.insert(m_item, 'end', text=pernom, open=True, tags=('person',))
                     self.item_meta[per_item] = {'type':'person', 'db_id': perid, 'eliminar':False, 'dret_vot':False}
         conn.close()
         self.refresh_tree_display_all()
+
 
     def on_tree_select(self, event=None):
         sel = self.tree.selection()
@@ -326,7 +370,7 @@ class ArbreApp(tk.Tk):
         membre_id = meta['db_id']
         conn = sqlite3.connect(DB_FILE)
         cur = conn.cursor()
-        cur.execute('SELECT DISTINCT nom FROM persones ORDER BY nom')
+        cur.execute('SELECT DISTINCT nom FROM persones WHERE (eliminat IS NULL OR eliminat = 0) ORDER BY nom')
         persones = [r[0] for r in cur.fetchall()]
         conn.close()
         dlg = ChooseOrCreateDialog(self, 'Afegir persona', persones)
@@ -337,7 +381,7 @@ class ArbreApp(tk.Tk):
         cur = conn.cursor()
         if created:
             try:
-                cur.execute('INSERT INTO persones (nom, membre_id) VALUES (?, ?)', (name, membre_id))
+                cur.execute('INSERT INTO persones (nom, membre_id, eliminat) VALUES (?, ?, 0)', (name, membre_id))
                 conn.commit()
                 pid = cur.lastrowid
             except sqlite3.IntegrityError:
@@ -350,7 +394,7 @@ class ArbreApp(tk.Tk):
             if row:
                 pid = row[0]
             else:
-                cur.execute('INSERT INTO persones (nom, membre_id) VALUES (?, ?)', (name, membre_id))
+                cur.execute('INSERT INTO persones (nom, membre_id, eliminat) VALUES (?, ?, 0)', (name, membre_id))
                 conn.commit()
                 pid = cur.lastrowid
         conn.close()
@@ -386,6 +430,14 @@ class ArbreApp(tk.Tk):
             meta = self.item_meta.get(row)
             if meta and meta['type'] == 'member':
                 meta['dret_vot'] = not meta.get('dret_vot', False)
+                # Desa a la BD immediatament (opcional, pots treure si només vols guardar a validar)
+                db_id = meta.get('db_id')
+                if db_id is not None:
+                    conn = sqlite3.connect(DB_FILE)
+                    cur = conn.cursor()
+                    cur.execute('UPDATE membres SET dret_vot=? WHERE id=?', (1 if meta['dret_vot'] else 0, db_id))
+                    conn.commit()
+                    conn.close()
                 self.refresh_tree_display_item(row)
                 self.refresh_subtree(row)
                 self.refresh_tree_display_all()
@@ -404,7 +456,8 @@ class ArbreApp(tk.Tk):
             else:
                 messagebox.showinfo('Info', 'Els elements de tipus "Persona" no poden tenir fills.')
             return "break"
-
+    
+    
     def on_single_click(self, event):
         region = self.tree.identify('region', event.x, event.y)
         if region not in ('cell', 'tree'):
@@ -423,6 +476,13 @@ class ArbreApp(tk.Tk):
         elif col == '#2':
             if meta.get('type') == 'member':
                 meta['dret_vot'] = not meta.get('dret_vot', False)
+                db_id = meta.get('db_id')
+                if db_id is not None:
+                    conn = sqlite3.connect(DB_FILE)
+                    cur = conn.cursor()
+                    cur.execute('UPDATE membres SET dret_vot=? WHERE id=?', (1 if meta['dret_vot'] else 0, db_id))
+                    conn.commit()
+                    conn.close()
                 self.refresh_tree_display_item(row)
                 self.refresh_subtree(row)
                 self.refresh_tree_display_all()
@@ -611,18 +671,26 @@ class ArbreApp(tk.Tk):
                     to_mark['member'].add(meta['db_id'])
                 elif meta['type'] == 'person' and meta['db_id']:
                     to_mark['person'].add(meta['db_id'])
-    
-            # Comprovem si el dret de vot ha canviat
-            if meta['type'] == 'member' and meta.get('dret_vot_original') is not None:
-                if meta.get('dret_vot_actual') != meta['dret_vot_original']:
+            if meta.get('type') == 'member' and meta.get('db_id') is not None:
+                if meta.get('dret_vot') != meta.get('dret_vot_original'):
                     dret_vot_modificat = True
     
-        # Guardem percentatges i dret de vot amb data de validació
-        self.save_percentatges_validacio()  # hauria d'incloure percentatges i dret de vot
+        # Desa l'estat de dret_vot de tots els membres a la BD
+        conn = sqlite3.connect(DB_FILE)
+        cur = conn.cursor()
+        for iid, meta in self.item_meta.items():
+            if meta.get('type') == 'member' and meta.get('db_id') is not None:
+                dret_vot_db = 1 if meta.get('dret_vot') else 0
+                cur.execute('UPDATE membres SET dret_vot=? WHERE id=?', (dret_vot_db, meta['db_id']))
+        conn.commit()
+        conn.close()
+    
+        # Guarda percentatges i dret de vot amb data de validació
+        self.save_percentatges_validacio()
     
         # Si no hi ha eliminacions ni canvi de dret de vot, avisem
         if not any(to_mark.values()) and not dret_vot_modificat:
-            messagebox.showinfo('VALIDAR', 'No hi ha elements marcats per eliminar ni dret de vot modificat.')
+            messagebox.showinfo('VALIDAR', 'No hi ha canvis per validar.')
             return
     
         # Si hi ha elements per marcar com a eliminats, demana confirmació
@@ -676,14 +744,22 @@ class ArbreApp(tk.Tk):
         conn.close()
         self.load_from_db()
     
-        # Missatge segons si només hi ha dret de vot modificat o eliminacions
-        if dret_vot_modificat and not any(to_mark.values()):
-            message = 'Percentatges i dret de vot guardats amb data de validació.'
+        # Actualitza dret_vot_original perquè la propera validació funcioni bé!
+        for iid, meta in self.item_meta.items():
+            if meta.get('type') == 'member':
+                meta['dret_vot_original'] = meta.get('dret_vot')
+    
+        # Missatge segons què s'ha validat
+        if any(to_mark.values()) and dret_vot_modificat:
+            message = 'S\'han validat eliminacions i s\'han actualitzat dret de vot i percentatges.'
+        elif any(to_mark.values()):
+            message = 'S\'han validat eliminacions.'
+        elif dret_vot_modificat:
+            message = 'S\'han actualitzat dret de vot i percentatges.'
         else:
-            message = 'Elements marcats com a eliminats i percentatges guardats.'
+            message = 'No hi ha canvis per validar.'
+    
         messagebox.showinfo('VALIDAR', message)
-
-
 
     def save_percentatges_validacio(self):
         """Guarda a la base de dades els percentatges actuals de cada membre amb data/hora."""
