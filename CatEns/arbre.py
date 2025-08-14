@@ -553,35 +553,41 @@ class ArbreApp(tk.Tk):
         meta = self.item_meta.get(item)
         if not meta:
             return
+    
+        # Checkbox d'eliminació
         elim = '☒' if meta.get('eliminar') else '☐'
-        if meta.get('type') == 'member':
-            dret = '☒' if meta.get('dret_vot') else '☐'
-        else:
-            dret = ''
+        # Checkbox dret de vot per membres
+        dret = '☒' if meta.get('type') == 'member' and meta.get('dret_vot') else '☐' if meta.get('type') == 'member' else ''
+    
         try:
             self.tree.set(item, 'Eliminar', elim)
             self.tree.set(item, 'DretVot', dret)
         except Exception:
             pass
+    
         if meta.get('type') == 'member':
+            # Comptatge de persones sota el membre (inclou Vacant)
             count = self.count_persons_under(item)
             try:
                 self.tree.set(item, 'Persones', str(count))
             except Exception:
                 pass
+    
+            # Percentatge calculat sobre persones vàlides amb dret a vot (ignora "Vacant")
             total = getattr(self, 'total_persones_vot', None)
             if total is None or total == 0:
                 total = self.total_persons_with_voting()
+    
             member_valid = self.count_valid_persons_under(item) if meta.get('dret_vot') else 0
             pct = (member_valid / total * 100.0) if (meta.get('dret_vot') and total > 0) else 0.0
             try:
                 self.tree.set(item, 'Percentatge', f"{pct:.1f}%")
             except Exception:
                 pass
-            # NOVA COLUMNA: Percentatge inicial
+    
+            # Percentatge inicial (si existeix)
             if meta.get('percent_inicial') is not None:
-                pct_ini = meta['percent_inicial']
-                pct_ini_str = f"{pct_ini:.1f}%"
+                pct_ini_str = f"{meta['percent_inicial']:.1f}%"
             else:
                 pct_ini_str = ""
             try:
@@ -589,22 +595,26 @@ class ArbreApp(tk.Tk):
             except Exception:
                 pass
         else:
+            # Restableix columnes per no membres
             try:
                 self.tree.set(item, 'Persones', '')
                 self.tree.set(item, 'Percentatge', '')
-                self.tree.set(item, 'PercentatgeInicial', '')  # Nova columna
+                self.tree.set(item, 'PercentatgeInicial', '')
             except Exception:
                 pass
-
+    
+        # Gestiona tags
         current_tags = list(self.tree.item(item, 'tags'))
-
+    
+        # Tag eliminat
         if meta.get('eliminar'):
             if 'eliminat' not in current_tags:
                 current_tags.append('eliminat')
         else:
             if 'eliminat' in current_tags:
                 current_tags = [t for t in current_tags if t != 'eliminat']
-
+    
+        # Tag no_vot
         apply_no_vot = False
         if meta.get('type') == 'member':
             apply_no_vot = not bool(meta.get('dret_vot'))
@@ -622,8 +632,9 @@ class ArbreApp(tk.Tk):
         else:
             if 'no_vot' in current_tags:
                 current_tags = [t for t in current_tags if t != 'no_vot']
-
+    
         self.tree.item(item, tags=tuple(current_tags))
+
 
     def refresh_tree_display_all(self):
         self.total_persones_vot = self.total_persons_with_voting()
@@ -667,11 +678,14 @@ class ArbreApp(tk.Tk):
             if not m:
                 continue
             if m.get('type') == 'person':
-                if not self.is_effectively_eliminated(ch):
+                # Comptem només si no està eliminada i el nom no és "Vacant"
+                if not self.is_effectively_eliminated(ch) and m.get('nom') != "Vacant":
                     total += 1
             else:
+                # Recorrem recursivament els fills
                 total += self.count_valid_persons_under(ch)
         return total
+
 
     def total_persons_with_voting(self):
         total = 0
@@ -683,58 +697,64 @@ class ArbreApp(tk.Tk):
 
     # -------------- MODIFICAT: on_validate ------------------
     def on_validate(self):
-        # PRIMER: Desa a la BD els nous elements, en ordre jeràrquic correcte
         conn = sqlite3.connect(DB_FILE)
         cur = conn.cursor()
-
+    
+        persona_afegida = False  # Flag per saber si hem afegit una persona
+    
         # 1. Partícips nous
         for iid, meta in self.item_meta.items():
             if meta.get('type') == 'particip' and meta.get('nou', False):
                 cur.execute('INSERT INTO particips (nom) VALUES (?)', (meta['nom'],))
                 meta['db_id'] = cur.lastrowid
                 meta['nou'] = False
-
-        # 2. Membres nous (necessiten referència a particip_id)
+    
+        # 2. Membres nous
         for iid, meta in self.item_meta.items():
             if meta.get('type') == 'member' and meta.get('nou', False):
                 particip_id = meta.get('particip_id')
-                # Troba el db_id real si era provisional
                 if not particip_id:
                     pitem = self.tree.parent(iid)
                     pmeta = self.item_meta.get(pitem)
                     particip_id = pmeta.get('db_id') if pmeta else None
                 if particip_id:
-                    cur.execute('INSERT INTO membres (nom, particip_id, dret_vot) VALUES (?, ?, ?)',
-                                (meta['nom'], particip_id, 1 if meta.get('dret_vot', False) else 0))
+                    cur.execute(
+                        "INSERT INTO membres (nom, particip_id, dret_vot) VALUES (?, ?, ?)",
+                        (meta['nom'], particip_id, 1 if meta.get('dret_vot', False) else 0)
+                    )
                     meta['db_id'] = cur.lastrowid
                     meta['nou'] = False
                     meta['particip_id'] = particip_id
-
-        # 3. Persones noves (necessiten membre_id real)
+    
+        # 3. Persones noves
         for iid, meta in self.item_meta.items():
             if meta.get('type') == 'person' and meta.get('nou', False):
                 membre_id = meta.get('membre_id')
-                # Troba el db_id real si era provisional
                 if not membre_id:
                     mitem = self.tree.parent(iid)
                     mmeta = self.item_meta.get(mitem)
                     membre_id = mmeta.get('db_id') if mmeta else None
                 if membre_id:
-                    cur.execute('INSERT INTO persones (nom, membre_id, eliminat) VALUES (?, ?, 0)',
-                                (meta['nom'], membre_id))
-                    meta['db_id'] = cur.lastrowid
+                    cur.execute(
+                        "INSERT OR REPLACE INTO persones (nom, membre_id, eliminat) VALUES (?, ?, 0)",
+                        (meta['nom'], membre_id)
+                    )
+                    nou_id = cur.lastrowid
+                    meta['db_id'] = nou_id
                     meta['nou'] = False
                     meta['membre_id'] = membre_id
-
+    
+                    # Si s'ha creat realment una persona nova, marquem-ho
+                    if nou_id is not None and nou_id != 0:
+                        persona_afegida = True
+    
         conn.commit()
         conn.close()
-
-        # Ara, la resta de VALIDAR igual que abans
-
+    
+        # Variables per controlar eliminacions i canvis de dret de vot
         to_mark = {'particip': set(), 'member': set(), 'person': set()}
         dret_vot_modificat = False
-
-        # Detecta elements marcats per eliminar i canvis en dret de vot
+    
         for iid, meta in self.item_meta.items():
             if meta.get('eliminar'):
                 if meta['type'] == 'particip' and meta['db_id']:
@@ -746,8 +766,8 @@ class ArbreApp(tk.Tk):
             if meta.get('type') == 'member' and meta.get('db_id') is not None:
                 if meta.get('dret_vot') != meta.get('dret_vot_original'):
                     dret_vot_modificat = True
-
-        # Desa l'estat de dret_vot de tots els membres a la BD
+    
+        # Desa l'estat de dret_vot a la BD
         conn = sqlite3.connect(DB_FILE)
         cur = conn.cursor()
         for iid, meta in self.item_meta.items():
@@ -756,25 +776,30 @@ class ArbreApp(tk.Tk):
                 cur.execute('UPDATE membres SET dret_vot=? WHERE id=?', (dret_vot_db, meta['db_id']))
         conn.commit()
         conn.close()
-
-        # Guarda percentatges i dret de vot amb data de validació
+    
+        # Desa percentatges i dret de vot amb data de validació
         self.save_percentatges_validacio()
-
-        # Si no hi ha eliminacions ni canvi de dret de vot, avisem
+    
+        # Si s'ha afegit una persona, només mostrem aquest missatge i sortim
+        if persona_afegida:
+            messagebox.showinfo('VALIDAR', 'Dades validades correctament')
+            return
+    
+        # Si no hi ha eliminacions ni canvi de dret de vot
         if not any(to_mark.values()) and not dret_vot_modificat:
             messagebox.showinfo('VALIDAR', 'No hi ha canvis per validar.')
             return
-
-        # Si hi ha elements per marcar com a eliminats, demana confirmació
+    
+        # Si hi ha elements per eliminar, demanem confirmació
         if any(to_mark.values()):
             if not messagebox.askyesno('VALIDAR', 'Confirma marcar com a eliminats els elements seleccionats?'):
                 return
-
+    
         conn = sqlite3.connect(DB_FILE)
         cur = conn.cursor()
         now = datetime.now().isoformat(sep=' ', timespec='seconds')
-
-        # Marca com a eliminats
+    
+        # Marca com a eliminats, incloses persones "Vacant"
         if to_mark['person']:
             ids = tuple(to_mark['person'])
             cur.execute(f"""
@@ -782,7 +807,7 @@ class ArbreApp(tk.Tk):
                 SET eliminat = 1, data_eliminacio = ?
                 WHERE id IN ({','.join('?' for _ in ids)})
             """, (now, *ids))
-
+    
         if to_mark['member']:
             ids = tuple(to_mark['member'])
             cur.execute(f"""
@@ -790,7 +815,7 @@ class ArbreApp(tk.Tk):
                 SET eliminat = 1, data_eliminacio = ?
                 WHERE id IN ({','.join('?' for _ in ids)})
             """, (now, *ids))
-
+    
         if to_mark['particip']:
             ids = tuple(to_mark['particip'])
             cur.execute(f"SELECT id FROM membres WHERE particip_id IN ({','.join('?' for _ in ids)})", ids)
@@ -811,17 +836,17 @@ class ArbreApp(tk.Tk):
                 SET eliminat = 1, data_eliminacio = ?
                 WHERE id IN ({','.join('?' for _ in ids)})
             """, (now, *ids))
-
+    
         conn.commit()
         conn.close()
         self.load_from_db()
-
-        # Actualitza dret_vot_original perquè la propera validació funcioni bé!
+    
+        # Actualitza dret_vot_original
         for iid, meta in self.item_meta.items():
             if meta.get('type') == 'member':
                 meta['dret_vot_original'] = meta.get('dret_vot')
-
-        # Missatge segons què s'ha validat
+    
+        # Missatges finals segons accions fetes
         if any(to_mark.values()) and dret_vot_modificat:
             message = 'S\'han validat eliminacions i s\'han actualitzat dret de vot i percentatges.'
         elif any(to_mark.values()):
@@ -830,8 +855,10 @@ class ArbreApp(tk.Tk):
             message = 'S\'han actualitzat dret de vot i percentatges.'
         else:
             message = 'No hi ha canvis per validar.'
-
+    
         messagebox.showinfo('VALIDAR', message)
+
+
 
     def save_percentatges_validacio(self):
         """Guarda a la base de dades els percentatges actuals de cada membre amb data/hora."""
