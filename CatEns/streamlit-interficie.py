@@ -166,28 +166,22 @@ class StreamlitTree:
             item = self.items[iid]
             meta = item["meta"]
             t = meta.get("type")
-            # Styles per tipus
             styles = {"entity":"#FFFFFF","tipus":"#F5F5F5",
                       "particip":"#D4EDDA","member":"#D1ECF1","person":"#E8E8FA"}
             row_style = f"background-color:{styles.get(t,'#FFFFFF')}; padding:3px;"
 
             cols = st.columns(len(self.columns))
-            # Text i indent
             cols[0].markdown(f"<div style='{row_style}'>{'&nbsp;'*4*indent}{item['text']}</div>", unsafe_allow_html=True)
-            # Checkbox Eliminar
             eliminar = cols[1].checkbox("", value=meta.get("eliminar", False), key=f"eliminar_{iid}")
             meta["eliminar"] = eliminar
-            # Checkbox DretVot
             dret_vot = cols[2].checkbox("", value=meta.get("dret_vot", False), key=f"dretvot_{iid}")
             meta["dret_vot"] = dret_vot
-            # Columnes restants
             for idx, col_name in enumerate(self.columns[3:], start=3):
                 val = item["values"][idx-1] if idx-1 < len(item["values"]) else ""
                 new_val = cols[idx].text_input(col_name, val, key=f"{col_name}_{iid}")
                 if idx-1 < len(item["values"]):
                     item["values"][idx-1] = new_val
 
-            # Renderitzar fills
             for ch in self.get_children(iid):
                 render_node(ch, indent+1)
 
@@ -195,42 +189,15 @@ class StreamlitTree:
         for r in roots:
             render_node(r)
 
-    # ────────── Afegir fills ──────────
-    def add_child_streamlit(self, parent_iid):
-        parent_meta = self.items[parent_iid]["meta"]
-        hierarchy_mapping = {"entity":"tipus","tipus":"particip","particip":"member","member":"person"}
-        child_type = hierarchy_mapping.get(parent_meta.get("type"))
-        if not child_type:
-            return
-        name = st.text_input(f"Nom nou {child_type} de {self.items[parent_iid]['text']}", key=f"new_{parent_iid}")
-        if name:
-            base_values = ["☐",""] + [""]*(len(self.columns)-3)
-            new_iid = self.insert(parent_iid, text=name, values=base_values, node_type=child_type)
-            self.items[new_iid]["meta"].setdefault("initial_values", base_values)
-            self.items[new_iid]["meta"].setdefault("initial_text", name)
-            self.items[new_iid]["meta"].setdefault("eliminar", False)
-            self.refresh_tree_display_all()
-
-    # ────────── Funcions d'import / export ──────────
-    def export_json(self):
-        return json.dumps([self.items[iid] for iid in self.items if self.parent(iid) is None], ensure_ascii=False, indent=2)
-
-    def load_from_file(self, uploaded_file):
-        if uploaded_file is None:
-            return
-        data = json.load(uploaded_file)
-        if isinstance(data, dict):
-            data = [data]
-        self._load_from_data(data)
-
+    # ────────── Botó importar dades obertes ──────────
     def importar_dades_obertes(self):
         try:
-            data = dadesObertes()
+            data = dadesObertes()  # Aquesta funció l'has de definir
+            self._load_from_data(data)
+            self.refresh_tree_display_all()
+            st.success("Dades obertes carregades correctament!")
         except Exception as e:
-            st.error(f"No s'han pogut carregar dadesObertes(): {e}")
-            return
-        self._load_from_data(data)
-        self.refresh_tree_display_all()
+            st.error(f"No s'han pogut carregar dades obertes: {e}")
 
 
 # ───────────────────────────────
@@ -250,12 +217,12 @@ columns = [
 
 tree = StreamlitTree(columns)
 
-# ─── Botons d'import i càrrega ───
+# ─── Sidebar ───
 st.sidebar.header("Gestió d'arbre")
 uploaded_file = st.sidebar.file_uploader("Carregar estat JSON", type="json")
 if uploaded_file:
     tree.load_from_file(uploaded_file)
-st.sidebar.button("Importar dadesObertes", on_click=tree.importar_dades_obertes)
+st.sidebar.button("Importar dades obertes", on_click=tree.importar_dades_obertes)
 st.sidebar.download_button("Descarregar estat JSON", tree.export_json(), file_name="arbre.json")
 
 # ─── Render arbre ───
