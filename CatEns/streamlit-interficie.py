@@ -1,33 +1,30 @@
-# arbre_streamlit.py
 import streamlit as st
 import json
-from copy import deepcopy
+from typing import Optional
 
 # ───────────────────────────────
-# Classe Tree emulant CanvasTree
+# Classe principal
 # ───────────────────────────────
 class StreamlitTree:
-    def __init__(self, columns, colors):
+    def __init__(self, columns):
         self.columns = columns
-        self.column_colors = colors
-        self.items = {}  # iid -> node info
-        self.children_map = {}  # parent_iid -> [child_iid,...]
-        self.parent_map = {}  # iid -> parent_iid
+        self.items = {}
+        self.children_map = {}
+        self.parent_map = {}
         self._next_iid = 0
 
-        self._selection = None
-
-    # ─── Inserció i accés ───
+    # ────────── Inserció i jerarquia ──────────
     def insert(self, parent, text="", values=(), node_type=None):
         iid = f"node_{self._next_iid}"
         self._next_iid += 1
 
         indent = 0
         if parent:
-            indent = self.items[parent]["indent"] + 1
+            parent_item = self.items.get(parent)
+            indent = parent_item["indent"] + 1 if parent_item else 1
 
         expected_vals = len(self.columns) - 1
-        vals = list(values)
+        vals = list(values) if values else []
         if len(vals) < expected_vals:
             vals.extend([""] * (expected_vals - len(vals)))
         elif len(vals) > expected_vals:
@@ -43,7 +40,7 @@ class StreamlitTree:
             "values": vals,
             "indent": indent,
             "expanded": True,
-            "meta": meta,
+            "meta": meta
         }
 
         self.children_map.setdefault(parent, []).append(iid)
@@ -56,182 +53,190 @@ class StreamlitTree:
     def parent(self, iid):
         return self.parent_map.get(iid)
 
-    def item(self, iid):
-        return self.items.get(iid, {})
-
-    def set(self, iid, column, value):
-        item = self.items[iid]
-        if column == self.columns[0]:
-            item["text"] = value
-        else:
-            idx = self.columns.index(column) - 1
-            item["values"][idx] = value
-
-    # ─── Guardar i carregar ───
-    def guardar_estat(self, filepath="tree_export.json"):
-        def node_to_dict(iid):
-            item = self.items[iid]
-            return {
-                "text": item["text"],
-                "values": item["values"],
-                "meta": item["meta"],
-                "parent": self.parent_map.get(iid),
-                "expanded": item.get("expanded", True),
-                "children": [node_to_dict(ch) for ch in self.get_children(iid)],
-            }
-        roots = [iid for iid, _ in self.items.items() if self.parent_map.get(iid) is None]
-        data = [node_to_dict(r) for r in roots]
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        st.success(f"Arbre guardat a {filepath}")
-
-    def carregar_estat(self, filepath=None):
-        if filepath is None:
-            st.warning("Necessites passar un fitxer JSON.")
-            return
-        with open(filepath, "r", encoding="utf-8") as f:
-            data = json.load(f)
+    # ────────── Carregar dades ──────────
+    def _load_from_data(self, data):
         self.items.clear()
         self.children_map.clear()
         self.parent_map.clear()
         self._next_iid = 0
-        def load_node(node, parent=None):
-            iid = self.insert(parent, node.get("text", ""), node.get("values", []), node.get("meta", {}).get("type"))
-            self.items[iid]["meta"].update(node.get("meta", {}))
+
+        def insert_node(node, parent=None):
+            text = node.get("text", "")
+            values = node.get("values", [])
+            node_type = node.get("meta", {}).get("type")
+            iid = self.insert(parent, text=text, values=values, node_type=node_type)
             for child in node.get("children", []):
-                load_node(child, iid)
-        for r in data:
-            load_node(r)
-        st.success("Arbre carregat correctament.")
+                insert_node(child, iid)
 
-    # ─── Selecció ───
-    def selection_set(self, iid):
-        self._selection = iid
+        for node in data:
+            insert_node(node)
 
-    def selection(self):
-        return (self._selection,) if self._selection else ()
+    # ────────── Funcions percentatges ──────────
+    def count_valid_persons(self, parent_iid):
+        total = 0
+        for ch in self.get_children(parent_iid):
+            meta = self.items[ch]["meta"]
+            if meta.get("eliminar"):
+                continue
+            if meta.get("type") == "person":
+                total += 1
+            else:
+                total += self.count_valid_persons(ch)
+        return total
 
-    # ─── Afegir fills ───
-    def add_child(self, parent_iid, name):
-        parent_meta = self.items[parent_iid]["meta"]
-        hierarchy = {"entity": "tipus", "tipus": "particip", "particip": "member", "member": "person"}
-        child_type = hierarchy.get(parent_meta.get("type"))
-        if not child_type:
-            return
-        num_extra = max(0, len(self.columns) - 3)
-        base_values = ["☐", ""] + [""] * num_extra
-        new_iid = self.insert(parent_iid, text=name, values=base_values, node_type=child_type)
-        new_meta = self.items[new_iid]["meta"]
-        new_meta.setdefault("initial_values", list(base_values))
-        new_meta.setdefault("initial_text", name)
-        new_meta.setdefault("eliminar", False)
-        if child_type == "member":
-            new_meta.setdefault("dret_vot", False)
-        if child_type == "person":
-            new_meta.setdefault("carrec", "")
-            new_meta.setdefault("dret_vot_parent", bool(parent_meta.get("dret_vot")))
-        return new_iid
-
-    # ─── Eliminació i dret de vot ───
-    def toggle_eliminar(self, iid):
-        meta = self.items[iid]["meta"]
-        meta["eliminar"] = not meta.get("eliminar", False)
-
-    def toggle_dret_vot(self, iid):
-        meta = self.items[iid]["meta"]
-        meta["dret_vot"] = not meta.get("dret_vot", False)
-
-    # ─── Percentatges i càlcul ───
-    def refresh_display(self):
-        # Implementació simplificada: assigna percentatges segons dret de vot i eliminació
-        entity_totals = {}
+    def refresh_tree_display_all(self):
         def is_effectively_eliminated(iid):
             cur = iid
             while cur:
-                if self.items[cur]["meta"].get("eliminar"):
+                meta = self.items[cur]["meta"]
+                if meta.get("eliminar"):
                     return True
                 cur = self.parent_map.get(cur)
             return False
 
-        def count_valid_persons_effective(parent_iid):
-            total = 0
-            for ch in self.get_children(parent_iid):
-                if is_effectively_eliminated(ch):
-                    continue
-                meta_ch = self.items[ch]["meta"]
-                if meta_ch.get("type") == "person":
-                    total += 1
-                else:
-                    total += count_valid_persons_effective(ch)
-            return total
-
         for iid, item in self.items.items():
             meta = item["meta"]
             t = meta.get("type")
+            # Inicialitzar columnes
+            for col in ["PersonesParticipActual","PersonesMembreActual",
+                        "PercentatgeParticip","Percentatge","PercentatgePersona"]:
+                if col in self.columns:
+                    idx = self.columns.index(col)
+                    if idx-1 < len(item["values"]):
+                        item["values"][idx-1] = "0.00" if "Percentatge" in col else "0"
+
             if is_effectively_eliminated(iid):
                 continue
+
             # Persones
             if t == "person":
-                meta["PercentatgePersona"] = "0.0"
+                parent_entity = iid
+                while parent_entity and self.items[parent_entity]["meta"].get("type") != "entity":
+                    parent_entity = self.parent_map.get(parent_entity)
+                total_entity = self.count_valid_persons(parent_entity) if parent_entity else 0
+                if total_entity > 0 and meta.get("dret_vot_parent"):
+                    pct = 100/total_entity
+                else:
+                    pct = 0
+                idx = self.columns.index("PercentatgePersona")-1
+                if 0 <= idx < len(item["values"]):
+                    item["values"][idx] = f"{pct:.2f}"
+
+            # Membres
             elif t == "member":
-                meta["Percentatge"] = "0.0"
+                cnt = self.count_valid_persons(iid)
+                idx_cnt = self.columns.index("PersonesMembreActual")-1
+                if 0 <= idx_cnt < len(item["values"]):
+                    item["values"][idx_cnt] = str(cnt)
+                idx_pct = self.columns.index("Percentatge")-1
+                parent_entity = iid
+                while parent_entity and self.items[parent_entity]["meta"].get("type") != "entity":
+                    parent_entity = self.parent_map.get(parent_entity)
+                total_entity = self.count_valid_persons(parent_entity) if parent_entity else 0
+                if 0 <= idx_pct < len(item["values"]):
+                    pct = (cnt/total_entity*100 if total_entity>0 and meta.get("dret_vot") else 0)
+                    item["values"][idx_pct] = f"{pct:.2f}"
+
+            # Partícips
             elif t == "particip":
-                meta["PercentatgeParticip"] = "0.0"
-            elif t == "entity":
-                meta["PercentatgeParticip"] = "0.0"
+                total_persons = 0
+                stack = [iid]
+                while stack:
+                    n = stack.pop()
+                    nmeta = self.items[n]["meta"]
+                    if nmeta.get("type")=="member" and nmeta.get("dret_vot"):
+                        total_persons += self.count_valid_persons(n)
+                    stack.extend(self.get_children(n))
+                idx_cnt = self.columns.index("PersonesParticipActual")-1
+                if 0 <= idx_cnt < len(item["values"]):
+                    item["values"][idx_cnt] = str(total_persons)
+                idx_pct = self.columns.index("PercentatgeParticip")-1
+                parent_entity = iid
+                while parent_entity and self.items[parent_entity]["meta"].get("type") != "entity":
+                    parent_entity = self.parent_map.get(parent_entity)
+                total_entity = self.count_valid_persons(parent_entity) if parent_entity else 0
+                if 0 <= idx_pct < len(item["values"]):
+                    pct = total_persons/total_entity*100 if total_entity>0 else 0
+                    item["values"][idx_pct] = f"{pct:.2f}"
 
+    # ────────── Render UI amb Streamlit ──────────
+    def render_tree_ui(self):
+        st.markdown("### Arbre jeràrquic")
+        def render_node(iid, indent=0):
+            item = self.items[iid]
+            meta = item["meta"]
+            t = meta.get("type")
+            # Styles per tipus
+            styles = {"entity":"#FFFFFF","tipus":"#F5F5F5",
+                      "particip":"#D4EDDA","member":"#D1ECF1","person":"#E8E8FA"}
+            row_style = f"background-color:{styles.get(t,'#FFFFFF')}; padding:3px;"
 
-# ───────────────────────────────
-# Streamlit UI
-# ───────────────────────────────
-def render_tree_ui(tree):
-    def render_node(iid):
-        item = tree.items[iid]
-        meta = item["meta"]
-        t = meta.get("type")
-        indent = item["indent"]
+            cols = st.columns(len(self.columns))
+            # Text i indent
+            cols[0].markdown(f"<div style='{row_style}'>{'&nbsp;'*4*indent}{item['text']}</div>", unsafe_allow_html=True)
+            # Checkbox Eliminar
+            eliminar = cols[1].checkbox("", value=meta.get("eliminar", False), key=f"eliminar_{iid}")
+            meta["eliminar"] = eliminar
+            # Checkbox DretVot
+            dret_vot = cols[2].checkbox("", value=meta.get("dret_vot", False), key=f"dretvot_{iid}")
+            meta["dret_vot"] = dret_vot
+            # Columnes restants
+            for idx, col_name in enumerate(self.columns[3:], start=3):
+                val = item["values"][idx-1] if idx-1 < len(item["values"]) else ""
+                new_val = cols[idx].text_input(col_name, val, key=f"{col_name}_{iid}")
+                if idx-1 < len(item["values"]):
+                    item["values"][idx-1] = new_val
 
-        st.markdown(f"<div style='padding-left:{indent*20}px;'>", unsafe_allow_html=True)
+            # Renderitzar fills
+            for ch in self.get_children(iid):
+                render_node(ch, indent+1)
 
-        cols = st.columns(len(tree.columns))
-        # Primera columna: text amb input
-        cols[0].text_input("Nom", value=item["text"], key=f"text_{iid}", on_change=tree.selection_set, args=(iid,))
-        # Eliminar
-        eliminar_val = meta.get("eliminar", False)
-        cols[1].checkbox("Eliminar", value=eliminar_val, key=f"eliminar_{iid}", on_change=tree.toggle_eliminar, args=(iid,))
-        # DretVot
-        dret_val = meta.get("dret_vot", False)
-        if t == "member":
-            cols[2].checkbox("DretVot", value=dret_val, key=f"dret_{iid}", on_change=tree.toggle_dret_vot, args=(iid,))
-        # Carrec
-        if t == "person":
-            idx_carrec = tree.columns.index("Carrec")
-            cur_val = item["values"][idx_carrec-1]
-            new_val = cols[idx_carrec].text_input("Carrec", value=cur_val, key=f"carrec_{iid}")
-            tree.set(iid, "Carrec", new_val)
+        roots = [iid for iid, _ in self.items.items() if self.parent_map.get(iid) is None]
+        for r in roots:
+            render_node(r)
 
-        # Botó afegir fill
-        if t != "person":
-            name = cols[0].text_input(f"Nom fill {iid}", key=f"childname_{iid}")
-            if cols[0].button("Afegir fill", key=f"btn_child_{iid}"):
-                if name.strip():
-                    tree.add_child(iid, name.strip())
+    # ────────── Afegir fills ──────────
+    def add_child_streamlit(self, parent_iid):
+        parent_meta = self.items[parent_iid]["meta"]
+        hierarchy_mapping = {"entity":"tipus","tipus":"particip","particip":"member","member":"person"}
+        child_type = hierarchy_mapping.get(parent_meta.get("type"))
+        if not child_type:
+            return
+        name = st.text_input(f"Nom nou {child_type} de {self.items[parent_iid]['text']}", key=f"new_{parent_iid}")
+        if name:
+            base_values = ["☐",""] + [""]*(len(self.columns)-3)
+            new_iid = self.insert(parent_iid, text=name, values=base_values, node_type=child_type)
+            self.items[new_iid]["meta"].setdefault("initial_values", base_values)
+            self.items[new_iid]["meta"].setdefault("initial_text", name)
+            self.items[new_iid]["meta"].setdefault("eliminar", False)
+            self.refresh_tree_display_all()
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    # ────────── Funcions d'import / export ──────────
+    def export_json(self):
+        return json.dumps([self.items[iid] for iid in self.items if self.parent(iid) is None], ensure_ascii=False, indent=2)
 
-        # Fills
-        for ch in tree.get_children(iid):
-            render_node(ch)
+    def load_from_file(self, uploaded_file):
+        if uploaded_file is None:
+            return
+        data = json.load(uploaded_file)
+        if isinstance(data, dict):
+            data = [data]
+        self._load_from_data(data)
 
-    roots = [iid for iid, _ in tree.items.items() if tree.parent_map.get(iid) is None]
-    for r in roots:
-        render_node(r)
+    def importar_dades_obertes(self):
+        try:
+            data = dadesObertes()
+        except Exception as e:
+            st.error(f"No s'han pogut carregar dadesObertes(): {e}")
+            return
+        self._load_from_data(data)
+        self.refresh_tree_display_all()
+
 
 # ───────────────────────────────
 # Execució Streamlit
 # ───────────────────────────────
-st.set_page_config(layout="wide")
-st.title("Arbre jeràrquic amb Streamlit")
+st.title("Arbre jeràrquic amb percentatges")
 
 columns = [
     "Nom / Nivell", "Eliminar", "DretVot",
@@ -242,19 +247,17 @@ columns = [
     "PercentatgePersonaInicial", "PercentatgePersona",
     "CarrecInicial", "Carrec"
 ]
-colors = ["#FFFFFF"]*len(columns)
 
-tree = StreamlitTree(columns, colors)
+tree = StreamlitTree(columns)
 
-# Sidebar: carregar / guardar
-with st.sidebar:
-    st.header("Opcions")
-    uploaded_file = st.file_uploader("Carregar JSON", type="json")
-    if uploaded_file:
-        tree.carregar_estat(uploaded_file)
+# ─── Botons d'import i càrrega ───
+st.sidebar.header("Gestió d'arbre")
+uploaded_file = st.sidebar.file_uploader("Carregar estat JSON", type="json")
+if uploaded_file:
+    tree.load_from_file(uploaded_file)
+st.sidebar.button("Importar dadesObertes", on_click=tree.importar_dades_obertes)
+st.sidebar.download_button("Descarregar estat JSON", tree.export_json(), file_name="arbre.json")
 
-    if st.button("Guardar estat"):
-        tree.guardar_estat("tree_export.json")
-
-st.header("Arbre jeràrquic")
-render_tree_ui(tree)
+# ─── Render arbre ───
+tree.render_tree_ui()
+tree.refresh_tree_display_all()
