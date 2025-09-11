@@ -1,106 +1,165 @@
 import streamlit as st
-import json
-import io
+from typing import Optional
 
+# ───────────────────────────────
+# Estructura CanvasTree simplificada per Streamlit
+# ───────────────────────────────
 class CanvasTree:
-    def __init__(self, columns, column_colors=None, row_height=25):
+    def __init__(self, columns, column_colors):
         self.columns = columns
-        self.column_colors = column_colors or ["#FFFFFF"] * len(columns)
-        self.row_height = row_height
-
-        self.items = {}         # iid → metadata
-        self.children_map = {}  # parent → [child_iids]
-        self.parent_map = {}    # child → parent
+        self.column_colors = column_colors
+        self.items = {}
+        self.children_map = {}
+        self.parent_map = {}
         self._next_iid = 0
         self._selection = None
 
-    # ───────────────────────────────
-    # Guardar estat (JSON descarregable)
-    # ───────────────────────────────
-    def guardar_estat(self):
-        """Genera un JSON descarregable amb l'estat actual de l'arbre."""
+    # ────────────── Setters / Getters ──────────────
+    def insert(self, parent, index="end", text="", values=(), node_type=None):
+        iid = f"node_{self._next_iid}"
+        self._next_iid += 1
+        indent = 0
+        if parent:
+            indent = self.items[parent]["indent"] + 1
+        expected_vals = len(self.columns) - 1
+        vals = list(values)
+        if len(vals) < expected_vals:
+            vals.extend([""] * (expected_vals - len(vals)))
+        elif len(vals) > expected_vals:
+            vals = vals[:expected_vals]
+        meta = {"initial_values": list(vals), "initial_text": text}
+        if node_type:
+            meta["type"] = node_type
+            meta["_locked_type"] = True
+        self.items[iid] = {
+            "text": text,
+            "values": vals,
+            "indent": indent,
+            "expanded": True,
+            "meta": meta,
+        }
+        self.children_map.setdefault(parent, []).append(iid)
+        self.parent_map[iid] = parent
+        return iid
 
-        def node_to_dict(iid):
+    def get_children(self, iid=None):
+        return self.children_map.get(iid, [])
+
+    def parent(self, iid):
+        return self.parent_map.get(iid)
+
+    def set(self, iid, column, value):
+        if iid not in self.items:
+            return
+        item = self.items[iid]
+        col_index = self.columns.index(column)
+        if col_index == 0:
+            item["text"] = value
+        else:
+            needed = col_index - 1
+            if needed >= len(item["values"]):
+                item["values"].extend([""] * (needed - len(item["values"]) + 1))
+            item["values"][col_index - 1] = value
+
+    def item(self, iid, option=None):
+        if iid not in self.items:
+            return {}
+        return self.items[iid]
+
+    # ────────────── Selecció ──────────────
+    def selection_set(self, iid):
+        self._selection = iid
+
+    def selection(self):
+        return (self._selection,) if self._selection else ()
+
+    # ────────────── Snapshot ──────────────
+    def _snapshot_initial_from_current(self, iid):
+        item = self.items.get(iid)
+        if not item:
+            return
+        item["meta"]["initial_values"] = list(item["values"])
+        item["meta"]["initial_text"] = item["text"]
+
+    # ────────────── Rendering per Streamlit ──────────────
+    def render_tree(self):
+        """Retorna llista de files jeràrquiques amb indentació i valors."""
+        def visit(iid, rows):
             item = self.items[iid]
-            return {
-                "text": item["text"],
-                "values": item["values"],
-                "meta": item["meta"].copy(),
-                "meta_initial_values": item["meta"].get("initial_values", []).copy(),
-                "meta_initial_text": item["meta"].get("initial_text", item["text"]),
-                "parent": self.parent_map.get(iid),
-                "expanded": item.get("expanded", True),
-                "children": [node_to_dict(child) for child in self.get_children(iid)]
-            }
-
+            text = ("    " * item["indent"]) + item["text"]
+            row = [text] + item["values"]
+            rows.append((iid, row))
+            for ch in self.get_children(iid):
+                visit(ch, rows)
+        rows = []
         roots = [iid for iid in self.items if self.parent_map.get(iid) is None]
-        data = [node_to_dict(iid) for iid in roots]
+        for r in roots:
+            visit(r, rows)
+        return rows
 
-        json_str = json.dumps(data, ensure_ascii=False, indent=2)
-        buffer = io.BytesIO(json_str.encode("utf-8"))
+# ───────────────────────────────
+# Funcions globals de càlcul
+# ───────────────────────────────
+def count_valid_persons(tree, parent_iid):
+    total = 0
+    for ch in tree.get_children(parent_iid):
+        meta = tree.item(ch)["meta"]
+        if meta.get("eliminar"):
+            continue
+        if meta.get("type") == "person":
+            total += 1
+        else:
+            total += count_valid_persons(tree, ch)
+    return total
 
-        st.download_button(
-            label="💾 Descarregar arbre en JSON",
-            data=buffer,
-            file_name="arbre.json",
-            mime="application/json"
-        )
+def refresh_tree_display_all(tree):
+    # Exemple simplificat: només percentatges persona
+    for iid in tree.items:
+        item = tree.items[iid]
+        meta = item["meta"]
+        t = meta.get("type")
+        if t == "person":
+            tree.set(iid, "PercentatgePersona", "100.00")  # simplificat
 
-    # ───────────────────────────────
-    # Carregar estat (JSON pujat)
-    # ───────────────────────────────
-    def carregar_estat(self, filtre_text=None):
-        """Carrega l'arbre des d’un fitxer JSON pujat amb Streamlit."""
-        uploaded_file = st.file_uploader("📂 Carrega un fitxer JSON", type=["json"])
-        if uploaded_file is not None:
-            try:
-                data = json.load(uploaded_file)
-                if isinstance(data, dict):
-                    data = [data]
-                self._load_from_data(data, filtre_text=filtre_text)
-                st.success("Arbre carregat correctament ✅")
-            except Exception as e:
-                st.error(f"No s'ha pogut carregar l'estat: {e}")
+# ───────────────────────────────
+# Execució principal Streamlit
+# ───────────────────────────────
+def main():
+    st.set_page_config(page_title="Arbre amb StreamlitTree", layout="wide")
+    st.title("Arbre jeràrquic editable")
 
-    # ───────────────────────────────
-    # Importar dades
-    # ───────────────────────────────
-    def importar(self, data=None, filtre_text=None):
-        """
-        Importa dades globals 'arrels', o bé dadesObertes(),
-        o demana un JSON via Streamlit si no existeixen.
-        """
-        try:
-            if data is None:
-                gl = globals()
-                potential = gl.get("arrels", None)
-                if isinstance(potential, list):
-                    data = potential
-                else:
-                    try:
-                        globals()["arrels"] = dadesObertes()
-                        data = globals()["arrels"]
-                    except Exception:
-                        uploaded_file = st.file_uploader("📂 Selecciona JSON d'import", type=["json"])
-                        if uploaded_file is None:
-                            return
-                        try:
-                            data = json.load(uploaded_file)
-                        except Exception as e:
-                            st.error(f"No s'ha pogut llegir el JSON d'import: {e}")
-                            return
+    columns = [
+        "Nom / Nivell", "Eliminar", "DretVot",
+        "PersonesParticipInicial", "PersonesParticipActual",
+        "PercentatgeParticipInicial", "PercentatgeParticip",
+        "PersonesMembreInicial", "PersonesMembreActual",
+        "PercentatgeInicial", "Percentatge",
+        "PercentatgePersonaInicial", "PercentatgePersona",
+        "CarrecInicial", "Carrec"
+    ]
+    colors = ["#FFFFFF"] * len(columns)
 
-            if isinstance(data, dict):
-                data = [data]
+    if "tree" not in st.session_state:
+        st.session_state.tree = CanvasTree(columns, colors)
+    tree = st.session_state.tree
 
-            self._load_from_data(data, filtre_text=filtre_text)
-            st.success("Dades importades correctament ✅")
-        except Exception as e:
-            st.error(f"S'ha produït un error en importar: {e}")
+    # Botons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Afegir entitat"):
+            name = st.text_input("Nom de la nova entitat:", key="new_entity")
+            if name:
+                new_iid = tree.insert(None, text=name, node_type="entity")
+                tree._snapshot_initial_from_current(new_iid)
+    with col2:
+        if st.button("Recalcul percentatges"):
+            refresh_tree_display_all(tree)
 
-    # ───────────────────────────────
-    # Placeholder: funció que després implementarem
-    # ───────────────────────────────
-    def _load_from_data(self, data, filtre_text=None):
-        """Carrega dades a l’arbre (funció pendent d’implementar)."""
-        st.write("⚠️ Funció `_load_from_data` encara no implementada")
+    # Render arbre
+    st.markdown("### Arbre")
+    rows = tree.render_tree()
+    for iid, row in rows:
+        st.write(row)
+
+if __name__ == "__main__":
+    main()
