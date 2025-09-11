@@ -1,53 +1,106 @@
 import streamlit as st
-import pandas as pd
+import json
+import io
 
-# ───────────────────────────────
-# Classe CanvasTree (versió Streamlit)
-# ───────────────────────────────
 class CanvasTree:
     def __init__(self, columns, column_colors=None, row_height=25):
         self.columns = columns
         self.column_colors = column_colors or ["#FFFFFF"] * len(columns)
         self.row_height = row_height
 
-        # Índex de la columna "Carrec" (si existeix)
-        self.carrec_col_index = self.columns.index("Carrec") if "Carrec" in self.columns else None
-
-        # Estat
-        self.items = {}         # iid → metadata (text, values, meta, etc.)
+        self.items = {}         # iid → metadata
         self.children_map = {}  # parent → [child_iids]
         self.parent_map = {}    # child → parent
         self._next_iid = 0
         self._selection = None
 
-    def render_header(self):
-        """Mostra la capçalera amb els noms de les columnes i els colors."""
-        cols = st.columns(len(self.columns))
-        for i, (col, color) in enumerate(zip(self.columns, self.column_colors)):
-            cols[i].markdown(
-                f"<div style='background-color:{color}; padding:8px; font-weight:bold; text-align:center;'>{col}</div>",
-                unsafe_allow_html=True
-            )
+    # ───────────────────────────────
+    # Guardar estat (JSON descarregable)
+    # ───────────────────────────────
+    def guardar_estat(self):
+        """Genera un JSON descarregable amb l'estat actual de l'arbre."""
 
-    def render_table_placeholder(self):
-        """Mostra una taula buida (placeholder)"""
-        df = pd.DataFrame(columns=self.columns)
-        st.dataframe(df, use_container_width=True, height=200)
+        def node_to_dict(iid):
+            item = self.items[iid]
+            return {
+                "text": item["text"],
+                "values": item["values"],
+                "meta": item["meta"].copy(),
+                "meta_initial_values": item["meta"].get("initial_values", []).copy(),
+                "meta_initial_text": item["meta"].get("initial_text", item["text"]),
+                "parent": self.parent_map.get(iid),
+                "expanded": item.get("expanded", True),
+                "children": [node_to_dict(child) for child in self.get_children(iid)]
+            }
 
-# ───────────────────────────────
-# Exemple d’ús
-# ───────────────────────────────
-def main():
-    st.title("CanvasTree en Streamlit (versió inicial)")
+        roots = [iid for iid in self.items if self.parent_map.get(iid) is None]
+        data = [node_to_dict(iid) for iid in roots]
 
-    columns = ["Nom", "Carrec", "Departament"]
-    column_colors = ["#f0f0f0", "#d0f0d0", "#d0d0f0"]
+        json_str = json.dumps(data, ensure_ascii=False, indent=2)
+        buffer = io.BytesIO(json_str.encode("utf-8"))
 
-    tree = CanvasTree(columns, column_colors)
+        st.download_button(
+            label="💾 Descarregar arbre en JSON",
+            data=buffer,
+            file_name="arbre.json",
+            mime="application/json"
+        )
 
-    tree.render_header()
-    tree.render_table_placeholder()
+    # ───────────────────────────────
+    # Carregar estat (JSON pujat)
+    # ───────────────────────────────
+    def carregar_estat(self, filtre_text=None):
+        """Carrega l'arbre des d’un fitxer JSON pujat amb Streamlit."""
+        uploaded_file = st.file_uploader("📂 Carrega un fitxer JSON", type=["json"])
+        if uploaded_file is not None:
+            try:
+                data = json.load(uploaded_file)
+                if isinstance(data, dict):
+                    data = [data]
+                self._load_from_data(data, filtre_text=filtre_text)
+                st.success("Arbre carregat correctament ✅")
+            except Exception as e:
+                st.error(f"No s'ha pogut carregar l'estat: {e}")
 
+    # ───────────────────────────────
+    # Importar dades
+    # ───────────────────────────────
+    def importar(self, data=None, filtre_text=None):
+        """
+        Importa dades globals 'arrels', o bé dadesObertes(),
+        o demana un JSON via Streamlit si no existeixen.
+        """
+        try:
+            if data is None:
+                gl = globals()
+                potential = gl.get("arrels", None)
+                if isinstance(potential, list):
+                    data = potential
+                else:
+                    try:
+                        globals()["arrels"] = dadesObertes()
+                        data = globals()["arrels"]
+                    except Exception:
+                        uploaded_file = st.file_uploader("📂 Selecciona JSON d'import", type=["json"])
+                        if uploaded_file is None:
+                            return
+                        try:
+                            data = json.load(uploaded_file)
+                        except Exception as e:
+                            st.error(f"No s'ha pogut llegir el JSON d'import: {e}")
+                            return
 
-if __name__ == "__main__":
-    main()
+            if isinstance(data, dict):
+                data = [data]
+
+            self._load_from_data(data, filtre_text=filtre_text)
+            st.success("Dades importades correctament ✅")
+        except Exception as e:
+            st.error(f"S'ha produït un error en importar: {e}")
+
+    # ───────────────────────────────
+    # Placeholder: funció que després implementarem
+    # ───────────────────────────────
+    def _load_from_data(self, data, filtre_text=None):
+        """Carrega dades a l’arbre (funció pendent d’implementar)."""
+        st.write("⚠️ Funció `_load_from_data` encara no implementada")
