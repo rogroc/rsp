@@ -1,0 +1,35 @@
+[
+  {
+    "text": "Entitat Exemple",
+    "values": [],
+    "meta": { "type": "entity" },
+    "children": [
+      {
+        "text": "Tipus A",
+        "values": [],
+        "meta": { "type": "tipus" },
+        "children": [
+          {
+            "text": "Partícip 1",
+            "values": ["☐","0","0.00"],
+            "meta": { "type": "particip" },
+            "children": [
+              {
+                "text": "Membre X",
+                "values": ["☐","1","50.00"],
+                "meta": { "type": "member", "dret_vot": true },
+                "children": [
+                  {
+                    "text": "Joan Pérez",
+                    "values": ["0.00","","","", ""],
+                    "meta": { "type": "person", "dret_vot_parent": true }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Arbre CanvasTree - Web</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="title">Arbre CanvasTree (web)</div>
+      <div class="controls">
+        <input id="file-input" type="file" accept="application/json" style="display:none" />
+        <button id="btn-import">Importar JSON</button>
+        <button id="btn-export">Exportar JSON</button>
+        <button id="btn-load-sample">Carregar exemple</button>
+      </div>
+    </header>
+
+    <div id="tree-wrap">
+      <div id="header-row" class="row header-row"></div>
+      <div id="rows" class="rows"></div>
+    </div>
+
+    <footer class="footer">
+      Doble clic a la primera columna per afegir fill. Doble clic a "Carrec" per editar (només person).
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
