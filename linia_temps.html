@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Línia de temps cronològica amb anotacions</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#f5f7fb;color:#202428}
+header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,0.04)}
+.container{display:grid;grid-template-columns:400px 1fr;gap:12px;height:calc(100vh - 64px);padding:12px}
+.panel{background:#fff;border-radius:10px;padding:12px;box-shadow:0 6px 18px rgba(18,30,70,0.06);overflow:auto}
+button{background:#0b5cff;color:#fff;border:0;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px}.secondary{background:#e6eefc;color:#0b5cff}
+.timeline-viewport{position:relative;height:100%;overflow:auto;padding:16px}
+.timeline-line{position:absolute;left:50%;width:4px;background:#0b5cff;border-radius:2px;top:0;bottom:0;}
+.timeline-item{position:absolute;display:flex;align-items:flex-start;gap:16px;width:100%}
+.timeline-item .file-box{flex:1;max-width:150px;font-size:12px}
+.timeline-item .date-box{width:70px;text-align:center;font-size:11px;color:#334155;flex-shrink:0;}
+.timeline-item .note-box{flex:2;font-size:12px;background:#eef4ff;border-radius:6px;padding:6px;position:relative;overflow:hidden}
+.note-box.collapsed{max-height:40px;overflow:hidden}
+.toggle-note{position:absolute;bottom:2px;right:4px;font-size:11px;color:#0b5cff;cursor:pointer;background:white;border-radius:3px;padding:1px 4px}
+textarea.note-edit{width:100%;min-height:40px;border-radius:6px;border:1px solid #cfe0ff;padding:4px;font-size:12px;margin-top:4px}
+</style>
+<script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<header>
+<h1>Línia de temps cronològica</h1>
+<div style="flex:1"></div>
+<button id="btnOpen">Obrir carpeta</button>
+</header>
+<div class="container">
+<div class="panel left">
+<div class="timeline-viewport" id="timelineViewport">
+<div class="timeline-line"></div>
+</div>
+</div>
+<div class="panel right" id="viewerPanel">
+<h3 id="viewerTitle">Cap fitxer seleccionat</h3>
+<div id="viewerContent" style="margin-top:8px"></div>
+<div style="margin-top:8px">
+<textarea id="noteEditor" class="note-edit" placeholder="Escriu o edita l'anotació aquí"></textarea>
+<button id="saveNote">Desa anotació</button>
+</div>
+</div>
+</div>
+<input type="file" id="dirPicker" webkitdirectory directory multiple style="display:none">
+<script>
+let files=[];
+let selectedFile=null;
+const timelineViewport=document.getElementById('timelineViewport');
+const viewerTitle=document.getElementById('viewerTitle');
+const viewerContent=document.getElementById('viewerContent');
+const noteEditor=document.getElementById('noteEditor');
+const saveNote=document.getElementById('saveNote');
+const dirPicker=document.getElementById('dirPicker');
+
+function parseDate(name){const m=name.match(/^([0-9]{8})/);if(!m)return null;const s=m[1];return new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8));}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function renderTimeline(){
+  timelineViewport.scrollTop=0;
+  const dated=files.filter(f=>f.date).sort((a,b)=>a.date-b.date);
+  const undated=files.filter(f=>!f.date).sort((a,b)=>a.name.localeCompare(b.name));
+  const all=dated.concat(undated);
+  const minDate=dated[0]?.date || new Date();
+  const maxDate=dated[dated.length-1]?.date || new Date(minDate.getTime()+86400000);
+  const totalHeight=Math.max(600,timelineViewport.clientHeight-40);
+  timelineViewport.querySelectorAll('.timeline-item').forEach(e=>e.remove());
+  
+  let lastTop={};
+  all.forEach(f=>{
+    const div=document.createElement('div'); div.className='timeline-item';
+    let t=f.date?((f.date.getTime()-minDate.getTime())/(maxDate.getTime()-minDate.getTime()))*totalHeight:totalHeight+20;
+    // Ajustament per evitar solapaments només si cal
+    const dateKey=f.date?ymd(f.date):f.name;
+    if(lastTop[dateKey]!==undefined && t-lastTop[dateKey]<60) t=lastTop[dateKey]+60;
+    lastTop[dateKey]=t;
+    div.style.top=t+'px';
+    const fileBox=document.createElement('div'); fileBox.className='file-box'; fileBox.textContent=f.name; fileBox.style.cursor='pointer';
+    fileBox.onclick=()=>loadFile(f);
+    const dateBox=document.createElement('div'); dateBox.className='date-box'; dateBox.textContent=f.date?f.date.toLocaleDateString():'---';
+    const noteBox=document.createElement('div'); noteBox.className='note-box';
+    const key='annot_file::'+f.name; const text=localStorage.getItem(key)||''; noteBox.textContent=text||'(Sense anotació)';
+    if(text.length>80){ noteBox.classList.add('collapsed'); const toggle=document.createElement('div'); toggle.className='toggle-note'; toggle.textContent='Mostra més'; toggle.onclick=(e)=>{e.stopPropagation(); noteBox.classList.toggle('collapsed'); toggle.textContent=noteBox.classList.contains('collapsed')?'Mostra més':'Mostra menys';}; noteBox.appendChild(toggle); }
+    div.appendChild(fileBox); div.appendChild(dateBox); div.appendChild(noteBox);
+    timelineViewport.appendChild(div);
+  });
+}
+
+async function loadFile(f){
+  selectedFile=f;
+  viewerTitle.textContent=f.name; viewerContent.innerHTML='';
+  const ext=f.name.split('.').pop().toLowerCase();
+  try{
+    if(ext==='txt'||ext==='rtf'){ const t=await f.file.text(); viewerContent.innerHTML='<pre>'+escapeHtml(t)+'</pre>';}
+    else if(ext==='pdf'){ const url=URL.createObjectURL(f.file); viewerContent.innerHTML='<iframe src="'+url+'" style="width:100%;height:400px"></iframe>'}
+    else if(ext==='docx'||ext==='doc'){ const buffer=await f.file.arrayBuffer(); const result=await mammoth.convertToHtml({arrayBuffer:buffer}); viewerContent.innerHTML=result.value}
+    else if(ext==='xlsx'||ext==='csv'){ const buffer=await f.file.arrayBuffer(); const wb=XLSX.read(buffer,{type:'array'}); const html=XLSX.utils.sheet_to_html(wb.Sheets[wb.SheetNames[0]]); viewerContent.innerHTML=html}
+    else viewerContent.textContent='Tipus no suportat';
+  }catch(e){viewerContent.textContent='Error: '+e.message;}
+  noteEditor.value=localStorage.getItem('annot_file::'+f.name)||'';
+}
+
+saveNote.addEventListener('click',()=>{if(!selectedFile)return; localStorage.setItem('annot_file::'+selectedFile.name,noteEditor.value); renderTimeline(); alert('Anotació desada.');});
+
+document.getElementById('btnOpen').addEventListener('click',()=>dirPicker.click());
+dirPicker.addEventListener('change', ev=>{files=Array.from(ev.target.files).map(f=>({name:f.name,file:f,date:parseDate(f.name)})); renderTimeline();});
+
+function ymd(date){return date.getFullYear()+('0'+(date.getMonth()+1)).slice(-2)+('0'+date.getDate()).slice(-2);}
+
+renderTimeline();
+</script>
+</body>
+</html>
