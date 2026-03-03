@@ -168,6 +168,7 @@ Cordialment,
 FI DE LA PLANTILLA.
 
 INSTRUCCIONS IMPORTANTS:
+0. NORMALITZA ELS NOMS: Utilitza la forma exacta que apareix dins el cos dels BORMEs, normalitzant majúscules/minúscules (p.ex. "SOCIETAT SL" -> "Societat, SL").
 1. Extreu TOTA la informació rellevant de cada BORME: augments de capital, reduccions de capital, modificació d'estatuts, canvis en accions o participacions, i qualsevol altra informació rellevant.
 2. AGRUPA els continguts per SOCIETAT, no per fitxer BORME. Si una mateixa societat apareix en diversos BORMEs, agrupa tota la seva informació sota el seu nom en una llista de vinyetes amb una línia per cada BORME.
 3. Resumeix el contingut de cada BORME en una sola línia per societat.
@@ -313,3 +314,4 @@ copyBtn.addEventListener('click', async () => {
 
 // ---- Init ----
 showState('empty');
+
